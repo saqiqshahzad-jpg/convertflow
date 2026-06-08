@@ -11,16 +11,296 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- DARK MODE FIX: Yeh script head mein hona chahiye taake page load pe flash na ho -->
-    <script>
-        (function() {
-            const saved = localStorage.getItem('theme');
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (saved === 'dark' || (!saved && systemDark)) {
-                document.documentElement.classList.add('dark');
+        <script>
+        // ===== API URL =====
+        const API_URL = 'https://convertflow-api.onrender.com'; // YEH APNI RENDER KI URL DALNA
+
+        // ===== THEME FIX =====
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
             } else {
-                document.documentElement.classList.remove('dark');
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
             }
-        })();
+        });
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('bg-white/80', 'dark:bg-neutral-900/80', 'backdrop-blur-md', 'border-b', 'border-neutral-200', 'dark:border-neutral-800');
+            } else {
+                navbar.classList.remove('bg-white/80', 'dark:bg-neutral-900/80', 'backdrop-blur-md', 'border-b', 'border-neutral-200', 'dark:border-neutral-800');
+            }
+        });
+
+        // ===== COMMAND PALETTE =====
+        const commandPalette = document.getElementById('commandPalette');
+        const commandInput = document.getElementById('commandInput');
+        const commandResults = document.getElementById('commandResults');
+
+        const converters = [
+            { name: 'text_to_pdf', desc: 'TXT → PDF', action: () => selectConverter('text-to-pdf') },
+            { name: 'word_to_pdf', desc: 'DOCX → PDF', action: () => selectConverter('word-to-pdf') },
+            { name: 'pdf_to_word', desc: 'PDF → DOCX', action: () => selectConverter('pdf-to-word') },
+            { name: 'image_to_pdf', desc: 'IMG → PDF', action: () => selectConverter('image-to-pdf') },
+            { name: 'pdf_to_image', desc: 'PDF → IMG', action: () => selectConverter('pdf-to-image') },
+            { name: 'merge_pdf', desc: 'PDF + PDF', action: () => selectConverter('merge-pdf') },
+            { name: 'split_pdf', desc: 'PDF → PDFs', action: () => selectConverter('split-pdf') },
+            { name: 'compress_pdf', desc: 'PDF → PDF', action: () => selectConverter('compress-pdf') },
+            { name: 'excel_to_pdf', desc: 'XLSX → PDF', action: () => selectConverter('excel-to-pdf') },
+            { name: 'ppt_to_pdf', desc: 'PPT → PDF', action: () => selectConverter('ppt-to-pdf') },
+            { name: 'html_to_pdf', desc: 'HTML → PDF', action: () => selectConverter('html-to-pdf') },
+            { name: 'ocr_extraction', desc: 'IMG → TXT', action: () => selectConverter('ocr-pdf') },
+        ];
+
+        function openCommandPalette() {
+            commandPalette.classList.remove('hidden');
+            commandPalette.classList.add('flex');
+            commandInput.value = '';
+            commandInput.focus();
+            renderResults(converters);
+        }
+
+        function closeCommandPalette() {
+            commandPalette.classList.add('hidden');
+            commandPalette.classList.remove('flex');
+        }
+
+        function renderResults(items) {
+            commandResults.innerHTML = items.map((item, i) => `
+                <div onclick="converters[${i}].action(); closeCommandPalette();" 
+                     class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-terminal text-neutral-400 text-xs"></i>
+                        <span class="font-mono text-sm text-neutral-900 dark:text-white">${item.name}</span>
+                    </div>
+                    <span class="font-mono text-xs text-neutral-500">${item.desc}</span>
+                </div>
+            `).join('');
+        }
+
+        commandInput.addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = converters.filter(c => c.name.includes(q) || c.desc.toLowerCase().includes(q));
+            renderResults(filtered);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openCommandPalette();
+            }
+            if (e.key === 'Escape') {
+                closeCommandPalette();
+                closeModal();
+            }
+        });
+
+        // ===== FILE UPLOAD =====
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const conversionArea = document.getElementById('conversionArea');
+        
+        // Global files storage
+        window.uploadedFiles = [];
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            // Store globally
+            window.uploadedFiles = Array.from(files);
+            conversionArea.classList.remove('hidden');
+            conversionArea.innerHTML = '';
+            
+            window.uploadedFiles.forEach((file, index) => {
+                const fileCard = document.createElement('div');
+                fileCard.className = 'flex items-center gap-4 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-slide-up';
+                fileCard.style.animationDelay = `${index * 0.1}s`;
+                
+                const icon = getFileIcon(file.name);
+                const size = formatBytes(file.size);
+                
+                fileCard.innerHTML = `
+                    <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid ${icon} text-neutral-600 dark:text-neutral-400"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-mono text-sm text-neutral-900 dark:text-white truncate">${file.name}</div>
+                        <div class="font-mono text-xs text-neutral-500">${size}</div>
+                    </div>
+                    <select id="format-${index}" class="px-3 py-2 rounded border border-neutral-200 dark:border-neutral-700 bg-transparent font-mono text-xs text-neutral-700 dark:text-neutral-300 focus:outline-none focus:border-neutral-900 dark:focus:border-white">
+                        <option value="pdf">PDF</option>
+                        <option value="docx">DOCX</option>
+                        <option value="txt">TXT</option>
+                        <option value="png">PNG</option>
+                        <option value="jpg">JPG</option>
+                    </select>
+                    <button onclick="startConversion(${index})" class="px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono text-xs hover:opacity-90 transition-opacity">
+                        convert()
+                    </button>
+                `;
+                
+                conversionArea.appendChild(fileCard);
+            });
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                pdf: 'fa-file-pdf',
+                doc: 'fa-file-word',
+                docx: 'fa-file-word',
+                txt: 'fa-file-lines',
+                jpg: 'fa-file-image',
+                jpeg: 'fa-file-image',
+                png: 'fa-file-image',
+                webp: 'fa-file-image',
+                xls: 'fa-file-excel',
+                xlsx: 'fa-file-excel',
+                ppt: 'fa-file-powerpoint',
+                pptx: 'fa-file-powerpoint',
+                html: 'fa-file-code',
+                md: 'fa-file-code'
+            };
+            return icons[ext] || 'fa-file';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ===== REAL CONVERSION =====
+        function selectConverter(type) {
+            document.getElementById('converters').scrollIntoView({ behavior: 'smooth' });
+            uploadZone.classList.add('border-neutral-900', 'dark:border-white');
+            setTimeout(() => {
+                uploadZone.classList.remove('border-neutral-900', 'dark:border-white');
+            }, 300);
+        }
+
+        async function startConversion(fileIndex) {
+            const file = window.uploadedFiles[fileIndex];
+            if (!file) return;
+
+            const modal = document.getElementById('conversionModal');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressSize = document.getElementById('progressSize');
+            const modalSuccess = document.getElementById('modalSuccess');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalSubtitle = document.getElementById('modalSubtitle');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modalSuccess.classList.add('hidden');
+            modalTitle.textContent = 'uploading...';
+            modalSubtitle.textContent = file.name;
+            progressBar.style.width = '10%';
+            progressText.textContent = '10%';
+            progressSize.textContent = `0MB / ${formatBytes(file.size)}`;
+
+            try {
+                // FormData banao
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('format', document.getElementById(`format-${fileIndex}`).value);
+
+                // Backend pe bhejo
+                const response = await fetch(`${API_URL}/convert`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                progressBar.style.width = '70%';
+                progressText.textContent = '70%';
+
+                const data = await response.json();
+
+                if (data.success) {
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    progressSize.textContent = `${formatBytes(file.size)} / ${formatBytes(file.size)}`;
+                    
+                    modalTitle.textContent = 'complete!';
+                    modalSubtitle.textContent = 'your file is ready';
+                    
+                    // Download button ko real link do
+                    const downloadBtn = document.getElementById('downloadBtn');
+                    const downloadUrl = `${API_URL}/download/${data.fileId}?name=${encodeURIComponent(data.fileName)}`;
+                    downloadBtn.href = downloadUrl;
+                    downloadBtn.download = data.fileName;
+                    
+                    modalSuccess.classList.remove('hidden');
+                } else {
+                    modalTitle.textContent = 'error!';
+                    modalSubtitle.textContent = 'something went wrong';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                modalTitle.textContent = 'error!';
+                modalSubtitle.textContent = 'failed to connect to server';
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('conversionModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Intersection Observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.converter-card').forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = `opacity 0.5s ease ${i * 0.05}s, transform 0.5s ease ${i * 0.05}s`;
+            observer.observe(el);
+        });
     </script>
 
     <script>
@@ -884,10 +1164,10 @@
             </div>
 
             <div id="modalSuccess" class="hidden mt-6 text-center">
-                <button class="w-full py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono text-sm hover:opacity-90 transition-opacity">
-                    <i class="fa-solid fa-download mr-2"></i>download_file()
-                </button>
-            </div>
+    <a id="downloadBtn" href="#" target="_blank" class="w-full py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono text-sm hover:opacity-90 transition-opacity block text-center">
+        <i class="fa-solid fa-download mr-2"></i>download file
+    </a>
+</div>
         </div>
     </div>
 
