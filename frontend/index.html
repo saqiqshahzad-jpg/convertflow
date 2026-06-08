@@ -10,6 +10,19 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- DARK MODE FIX: Yeh script head mein hona chahiye taake page load pe flash na ho -->
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && systemDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -19,31 +32,13 @@
                         mono: ['JetBrains Mono', 'monospace'],
                         sans: ['Inter', 'sans-serif'],
                     },
-                    colors: {
-                        matte: {
-                            900: '#050505',
-                            800: '#0a0a0a',
-                            700: '#111111',
-                            600: '#1a1a1a',
-                            500: '#222222',
-                            400: '#2a2a2a',
-                            300: '#333333',
-                        },
-                        soft: {
-                            50: '#ffffff',
-                            100: '#fafafa',
-                            200: '#f5f5f5',
-                            300: '#eeeeee',
-                            400: '#e5e5e5',
-                            500: '#d4d4d4',
-                            600: '#a3a3a3',
-                        }
-                    },
                     animation: {
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'float': 'float 6s ease-in-out infinite',
                         'slide-up': 'slideUp 0.5s ease-out',
                         'fade-in': 'fadeIn 0.3s ease-out',
+                        'marquee': 'marquee 25s linear infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
                     },
                     keyframes: {
                         float: {
@@ -57,6 +52,14 @@
                         fadeIn: {
                             '0%': { opacity: '0' },
                             '100%': { opacity: '1' },
+                        },
+                        marquee: {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-50%)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(128,128,128,0.1)' },
+                            '100%': { boxShadow: '0 0 20px rgba(128,128,128,0.3)' },
                         }
                     }
                 }
@@ -65,6 +68,22 @@
     </script>
 
     <style>
+        /* NOISE TEXTURE OVERLAY — Premium feel */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        .dark .noise-overlay {
+            opacity: 0.05;
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -74,29 +93,6 @@
         /* Smooth theme transition */
         *, *::before, *::after {
             transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        /* Code aesthetic elements */
-        .code-line::before {
-            content: attr(data-line);
-            position: absolute;
-            left: -2rem;
-            color: #666;
-            font-size: 0.75rem;
-            text-align: right;
-            width: 1.5rem;
-        }
-
-        /* Glassmorphism */
-        .glass-dark {
-            background: rgba(17, 17, 17, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .glass-light {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         /* Grid pattern background */
@@ -111,6 +107,12 @@
         .upload-zone.dragover {
             transform: scale(1.02);
             border-style: solid;
+            border-color: #171717;
+            background: rgba(23, 23, 23, 0.02);
+        }
+        .dark .upload-zone.dragover {
+            border-color: #ffffff;
+            background: rgba(255, 255, 255, 0.02);
         }
 
         /* Terminal cursor */
@@ -120,7 +122,7 @@
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        /* Converter card hover */
+        /* Converter card hover glow */
         .converter-card {
             position: relative;
             overflow: hidden;
@@ -137,6 +139,12 @@
         }
         .converter-card:hover::before {
             left: 100%;
+        }
+        .converter-card:hover {
+            box-shadow: 0 0 30px rgba(128,128,128,0.15);
+        }
+        .dark .converter-card:hover {
+            box-shadow: 0 0 30px rgba(255,255,255,0.08);
         }
 
         /* Progress bar stripe animation */
@@ -158,10 +166,60 @@
             from { background-position: 1rem 0; }
             to { background-position: 0 0; }
         }
+
+        /* Command Palette */
+        .command-palette {
+            backdrop-filter: blur(16px);
+        }
+        .dark .command-palette {
+            background: rgba(10, 10, 10, 0.95);
+        }
+
+        /* Live ticker */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .ticker {
+            display: inline-block;
+            animation: marquee 30s linear infinite;
+        }
+
+        /* Glassmorphism */
+        .glass-dark {
+            background: rgba(17, 17, 17, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-light {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 
 <body class="font-sans antialiased selection:bg-neutral-300 dark:selection:bg-neutral-700">
+
+    <!-- Noise Overlay -->
+    <div class="noise-overlay"></div>
+
+    <!-- Command Palette -->
+    <div id="commandPalette" class="fixed inset-0 z-[60] hidden items-start justify-center pt-[20vh] p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCommandPalette()"></div>
+        <div class="command-palette relative w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-2xl overflow-hidden animate-fade-in">
+            <div class="flex items-center gap-3 p-4 border-b border-neutral-200 dark:border-neutral-700">
+                <i class="fa-solid fa-magnifying-glass text-neutral-400"></i>
+                <input type="text" id="commandInput" placeholder="Search converters... (e.g., pdf to word)" 
+                    class="w-full bg-transparent font-mono text-sm text-neutral-900 dark:text-white outline-none placeholder:text-neutral-400">
+                <kbd class="hidden sm:inline-block px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-500">ESC</kbd>
+            </div>
+            <div id="commandResults" class="max-h-[300px] overflow-y-auto p-2">
+                <!-- Results populated by JS -->
+            </div>
+        </div>
+    </div>
 
     <!-- Navigation -->
     <nav id="navbar" class="fixed top-0 w-full z-50 transition-all duration-300">
@@ -169,7 +227,7 @@
             <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <div class="flex items-center gap-3 group cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <div class="w-8 h-8 rounded bg-neutral-900 dark:bg-white flex items-center justify-center">
+                    <div class="w-8 h-8 rounded bg-neutral-900 dark:bg-white flex items-center justify-center animate-pulse-slow">
                         <i class="fa-solid fa-code text-white dark:text-neutral-900 text-sm"></i>
                     </div>
                     <div class="font-mono font-bold text-xl tracking-tight text-neutral-900 dark:text-white">
@@ -188,6 +246,12 @@
 
                 <!-- Right Actions -->
                 <div class="flex items-center gap-4">
+                    <!-- Command Palette Trigger -->
+                    <button onclick="openCommandPalette()" class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                        <i class="fa-solid fa-command text-xs text-neutral-500"></i>
+                        <span class="font-mono text-xs text-neutral-500">Ctrl K</span>
+                    </button>
+
                     <!-- Theme Toggle -->
                     <button id="themeToggle" class="w-10 h-10 rounded-full border border-neutral-200 dark:border-neutral-700 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                         <i class="fa-solid fa-sun text-neutral-600 dark:hidden"></i>
@@ -239,8 +303,8 @@
                     class="px-8 py-4 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono font-medium hover:scale-105 transition-transform shadow-lg dark:shadow-neutral-800/50">
                     start_converting()
                 </button>
-                <button class="px-8 py-4 border border-neutral-300 dark:border-neutral-700 rounded font-mono text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-                    view_documentation()
+                <button onclick="openCommandPalette()" class="px-8 py-4 border border-neutral-300 dark:border-neutral-700 rounded font-mono text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+                    quick_search()
                 </button>
             </div>
 
@@ -270,6 +334,26 @@
             <i class="fa-solid fa-chevron-down text-neutral-400 dark:text-neutral-600 text-sm"></i>
         </div>
     </section>
+
+    <!-- Live Conversions Ticker -->
+    <div class="border-y border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 py-3 overflow-hidden">
+        <div class="ticker-wrap">
+            <div class="ticker font-mono text-xs text-neutral-500 dark:text-neutral-500">
+                <span class="mx-8">🔥 someone from Mumbai just converted PDF → Word</span>
+                <span class="mx-8">⚡ someone from London just converted JPG → PDF</span>
+                <span class="mx-8">🚀 someone from New York just merged 5 PDFs</span>
+                <span class="mx-8">💎 someone from Tokyo just subscribed to Pro</span>
+                <span class="mx-8">🔥 someone from Berlin just converted Excel → PDF</span>
+                <span class="mx-8">⚡ someone from Paris just compressed a 50MB PDF</span>
+                <span class="mx-8">🚀 someone from Dubai just used OCR extraction</span>
+                <span class="mx-8">💎 someone from Sydney just converted PPT → PDF</span>
+                <span class="mx-8">🔥 someone from Mumbai just converted PDF → Word</span>
+                <span class="mx-8">⚡ someone from London just converted JPG → PDF</span>
+                <span class="mx-8">🚀 someone from New York just merged 5 PDFs</span>
+                <span class="mx-8">💎 someone from Tokyo just subscribed to Pro</span>
+            </div>
+        </div>
+    </div>
 
     <!-- Converter Section -->
     <section id="converters" class="py-24 relative">
@@ -571,7 +655,7 @@
                         </li>
                     </ul>
                     <button class="w-full py-3 rounded border border-neutral-300 dark:border-neutral-700 font-mono text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-                        start free
+                        start_free()
                     </button>
                 </div>
 
@@ -611,12 +695,12 @@
                         </li>
                     </ul>
                     <a href="https://vencodeofficial.lemonsqueezy.com/checkout/buy/fd711d9c-48fb-4523-a301-d9bf38a5b290?desc=0&discount=0" 
-                     target="_blank"
-                        class="w-full py-3 rounded bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-mono text-sm hover:opacity-90 transition-opacity font-medium block text-center">
-                       subscribe pro
-                             </a>
+                       target="_blank"
+                       class="w-full py-3 rounded bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-mono text-sm hover:opacity-90 transition-opacity font-medium block text-center">
+                        subscribe_pro()
+                    </a>
+                </div>
 
-                    
                 <!-- Enterprise Tier -->
                 <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-8 bg-white dark:bg-neutral-900 relative">
                     <div class="mb-6">
@@ -650,7 +734,7 @@
                         </li>
                     </ul>
                     <button class="w-full py-3 rounded border border-neutral-300 dark:border-neutral-700 font-mono text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-                        contact sales
+                        contact_sales()
                     </button>
                 </div>
             </div>
@@ -808,17 +892,19 @@
     </div>
 
     <script>
-        // Theme Management
+        // ===== THEME FIX: localStorage + System + Toggle =====
         const themeToggle = document.getElementById('themeToggle');
         const html = document.documentElement;
-        
-        // Check system preference
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            html.classList.add('dark');
-        }
-        
+
+        // Toggle function
         themeToggle.addEventListener('click', () => {
-            html.classList.toggle('dark');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
         });
 
         // Navbar scroll effect
@@ -831,7 +917,71 @@
             }
         });
 
-        // File Upload Handling
+        // ===== COMMAND PALETTE =====
+        const commandPalette = document.getElementById('commandPalette');
+        const commandInput = document.getElementById('commandInput');
+        const commandResults = document.getElementById('commandResults');
+
+        const converters = [
+            { name: 'text_to_pdf', desc: 'TXT → PDF', action: () => selectConverter('text-to-pdf') },
+            { name: 'word_to_pdf', desc: 'DOCX → PDF', action: () => selectConverter('word-to-pdf') },
+            { name: 'pdf_to_word', desc: 'PDF → DOCX', action: () => selectConverter('pdf-to-word') },
+            { name: 'image_to_pdf', desc: 'IMG → PDF', action: () => selectConverter('image-to-pdf') },
+            { name: 'pdf_to_image', desc: 'PDF → IMG', action: () => selectConverter('pdf-to-image') },
+            { name: 'merge_pdf', desc: 'PDF + PDF', action: () => selectConverter('merge-pdf') },
+            { name: 'split_pdf', desc: 'PDF → PDFs', action: () => selectConverter('split-pdf') },
+            { name: 'compress_pdf', desc: 'PDF → PDF', action: () => selectConverter('compress-pdf') },
+            { name: 'excel_to_pdf', desc: 'XLSX → PDF', action: () => selectConverter('excel-to-pdf') },
+            { name: 'ppt_to_pdf', desc: 'PPT → PDF', action: () => selectConverter('ppt-to-pdf') },
+            { name: 'html_to_pdf', desc: 'HTML → PDF', action: () => selectConverter('html-to-pdf') },
+            { name: 'ocr_extraction', desc: 'IMG → TXT', action: () => selectConverter('ocr-pdf') },
+        ];
+
+        function openCommandPalette() {
+            commandPalette.classList.remove('hidden');
+            commandPalette.classList.add('flex');
+            commandInput.value = '';
+            commandInput.focus();
+            renderResults(converters);
+        }
+
+        function closeCommandPalette() {
+            commandPalette.classList.add('hidden');
+            commandPalette.classList.remove('flex');
+        }
+
+        function renderResults(items) {
+            commandResults.innerHTML = items.map((item, i) => `
+                <div onclick="converters[${i}].action(); closeCommandPalette();" 
+                     class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-terminal text-neutral-400 text-xs"></i>
+                        <span class="font-mono text-sm text-neutral-900 dark:text-white">${item.name}</span>
+                    </div>
+                    <span class="font-mono text-xs text-neutral-500">${item.desc}</span>
+                </div>
+            `).join('');
+        }
+
+        commandInput.addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = converters.filter(c => c.name.includes(q) || c.desc.toLowerCase().includes(q));
+            renderResults(filtered);
+        });
+
+        // Keyboard shortcut: Ctrl+K or Cmd+K
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                openCommandPalette();
+            }
+            if (e.key === 'Escape') {
+                closeCommandPalette();
+                closeModal();
+            }
+        });
+
+        // ===== FILE UPLOAD =====
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
         const conversionArea = document.getElementById('conversionArea');
@@ -840,16 +990,16 @@
         
         uploadZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadZone.classList.add('dragover', 'border-neutral-900', 'dark:border-white');
+            uploadZone.classList.add('dragover');
         });
 
         uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover', 'border-neutral-900', 'dark:border-white');
+            uploadZone.classList.remove('dragover');
         });
 
         uploadZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadZone.classList.remove('dragover', 'border-neutral-900', 'dark:border-white');
+            uploadZone.classList.remove('dragover');
             handleFiles(e.dataTransfer.files);
         });
 
@@ -928,7 +1078,6 @@
         // Conversion Simulation
         function selectConverter(type) {
             document.getElementById('converters').scrollIntoView({ behavior: 'smooth' });
-            // Flash the upload zone
             uploadZone.classList.add('border-neutral-900', 'dark:border-white');
             setTimeout(() => {
                 uploadZone.classList.remove('border-neutral-900', 'dark:border-white');
