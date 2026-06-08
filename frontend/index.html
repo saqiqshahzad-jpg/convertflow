@@ -1,129 +1,203 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ConvertFlow — Universal Document Converter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- DARK MODE FIX: Head mein hona chahiye taake page load pe flash na ho -->
-    <script>
-        (function() {
-            const saved = localStorage.getItem('theme');
-            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (saved === 'dark' || (!saved && systemDark)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        })();
-    </script>
-
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
-                        mono: ['JetBrains Mono', 'monospace'],
                         sans: ['Inter', 'sans-serif'],
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                        'slide-up': 'slideUp 0.5s ease-out',
-                        'fade-in': 'fadeIn 0.3s ease-out',
-                        'marquee': 'marquee 30s linear infinite',
-                        'glow': 'glow 2s ease-in-out infinite alternate',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        },
-                        slideUp: {
-                            '0%': { transform: 'translateY(20px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' },
-                        },
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        marquee: {
-                            '0%': { transform: 'translateX(0%)' },
-                            '100%': { transform: 'translateX(-50%)' },
-                        },
-                        glow: {
-                            '0%': { boxShadow: '0 0 5px rgba(128,128,128,0.1)' },
-                            '100%': { boxShadow: '0 0 20px rgba(128,128,128,0.3)' },
-                        }
+                        mono: ['JetBrains Mono', 'monospace'],
                     }
                 }
             }
         }
     </script>
 
+    <!-- Libraries -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+
     <style>
-        /* NOISE TEXTURE OVERLAY */
-        .noise-overlay {
+        /* ===== CSS VARIABLES FOR 4 THEMES ===== */
+        :root {
+            --bg-body: #ffffff;
+            --bg-surface: #fafafa;
+            --bg-card: #ffffff;
+            --bg-hover: #f5f5f5;
+            --bg-input: #f0f0f0;
+            --text-main: #0a0a0a;
+            --text-muted: #737373;
+            --text-dim: #a3a3a3;
+            --border: #e5e5e5;
+            --accent: #171717;
+            --accent-text: #ffffff;
+            --glow: none;
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #000000;
+            --bg-surface: #050505;
+            --bg-card: #0a0a0a;
+            --bg-hover: #111111;
+            --bg-input: #141414;
+            --text-main: #fafafa;
+            --text-muted: #a3a3a3;
+            --text-dim: #525252;
+            --border: #1f1f1f;
+            --accent: #ffffff;
+            --accent-text: #000000;
+            --glow: 0 0 20px rgba(255,255,255,0.05);
+        }
+
+        [data-theme="cyber"] {
+            --bg-body: #001005;
+            --bg-surface: #001a0a;
+            --bg-card: #002211;
+            --bg-hover: #00331a;
+            --bg-input: #004422;
+            --text-main: #00ff66;
+            --text-muted: #00cc44;
+            --text-dim: #008833;
+            --border: #004d26;
+            --accent: #00ff66;
+            --accent-text: #001005;
+            --glow: 0 0 15px rgba(0,255,102,0.4);
+            --success: #00ff66;
+            --error: #ff4444;
+        }
+
+        [data-theme="midnight"] {
+            --bg-body: #09071f;
+            --bg-surface: #110e2e;
+            --bg-card: #1a1640;
+            --bg-hover: #231d52;
+            --bg-input: #2c2566;
+            --text-main: #e0dcff;
+            --text-muted: #a89af0;
+            --text-dim: #7c6fbf;
+            --border: #2e265e;
+            --accent: #c4b5fd;
+            --accent-text: #09071f;
+            --glow: 0 0 25px rgba(196,181,253,0.25);
+            --success: #a78bfa;
+            --error: #f87171;
+        }
+
+        /* ===== THEME UTILITY CLASSES ===== */
+        .bg-theme-body { background-color: var(--bg-body); }
+        .bg-theme-surface { background-color: var(--bg-surface); }
+        .bg-theme-card { background-color: var(--bg-card); }
+        .bg-theme-hover:hover { background-color: var(--bg-hover); }
+        .bg-theme-input { background-color: var(--bg-input); }
+        .text-theme-main { color: var(--text-main); }
+        .text-theme-muted { color: var(--text-muted); }
+        .text-theme-dim { color: var(--text-dim); }
+        .border-theme { border-color: var(--border); }
+        .shadow-glow { box-shadow: var(--glow); }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--accent-text);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: var(--glow);
+        }
+
+        .btn-secondary {
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            color: var(--text-main);
+            border-color: var(--text-dim);
+        }
+
+        /* ===== NOISE OVERLAY ===== */
+        .noise {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             pointer-events: none;
             z-index: 9999;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
-        .dark .noise-overlay {
-            opacity: 0.05;
-        }
+        [data-theme="dark"] .noise { opacity: 0.04; }
+        [data-theme="cyber"] .noise { opacity: 0.06; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+        [data-theme="midnight"] .noise { opacity: 0.03; }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        .dark ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-        
-        /* Smooth theme transition */
-        *, *::before, *::after {
-            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-        }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
-        /* Grid pattern background */
+        /* ===== GRID BG ===== */
         .grid-bg {
-            background-image: 
-                linear-gradient(rgba(128,128,128,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(128,128,128,0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            opacity: 0.3;
         }
 
-        /* Upload zone */
+        /* ===== TICKER ===== */
+        .ticker-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+        .ticker-track {
+            display: inline-flex;
+            animation: ticker 35s linear infinite;
+        }
+        .ticker-track:hover {
+            animation-play-state: paused;
+        }
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ===== UPLOAD ZONE ===== */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            transition: all 0.3s ease;
+        }
         .upload-zone.dragover {
-            transform: scale(1.02);
-            border-style: solid;
-            border-color: #171717;
-            background: rgba(23, 23, 23, 0.02);
-        }
-        .dark .upload-zone.dragover {
-            border-color: #ffffff;
-            background: rgba(255, 255, 255, 0.02);
+            border-color: var(--accent);
+            background: var(--bg-hover);
+            transform: scale(1.01);
         }
 
-        /* Terminal cursor */
-        .cursor-blink::after {
-            content: '_';
-            animation: blink 1s step-end infinite;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        /* Converter card hover glow */
+        /* ===== CARDS ===== */
         .converter-card {
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
@@ -135,713 +209,567 @@
             width: 100%;
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(128,128,128,0.05), transparent);
-            transition: left 0.5s;
+            transition: left 0.6s;
         }
         .converter-card:hover::before {
             left: 100%;
         }
         .converter-card:hover {
-            box-shadow: 0 0 30px rgba(128,128,128,0.15);
-        }
-        .dark .converter-card:hover {
-            box-shadow: 0 0 30px rgba(255,255,255,0.08);
-        }
-
-        /* Progress bar stripe */
-        .progress-stripe {
-            background-image: linear-gradient(
-                45deg,
-                rgba(255,255,255,.15) 25%,
-                transparent 25%,
-                transparent 50%,
-                rgba(255,255,255,.15) 50%,
-                rgba(255,255,255,.15) 75%,
-                transparent 75%,
-                transparent
-            );
-            background-size: 1rem 1rem;
-            animation: progress-stripes 1s linear infinite;
-        }
-        @keyframes progress-stripes {
-            from { background-position: 1rem 0; }
-            to { background-position: 0 0; }
+            border-color: var(--text-dim);
+            transform: translateY(-2px);
+            box-shadow: var(--glow);
         }
 
-        /* Command Palette */
+        /* ===== PROGRESS ===== */
+        .progress-fill {
+            background: linear-gradient(90deg, var(--accent), var(--text-muted));
+            background-size: 200% 100%;
+            animation: progressShine 2s ease infinite;
+        }
+        @keyframes progressShine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ===== MODAL ===== */
+        .modal-backdrop {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        /* ===== TOAST ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 3.7s forwards;
+            max-width: 320px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: var(--glow);
+        }
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--error); }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(10px); }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .fade-in { animation: fadeIn 0.5s ease both; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .pulse-dot { animation: pulseDot 2s infinite; }
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ===== CURSOR ===== */
+        .cursor-blink::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+            color: var(--accent);
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* ===== COMMAND PALETTE ===== */
         .command-palette {
-            backdrop-filter: blur(16px);
-        }
-        .dark .command-palette {
-            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            background: rgba(var(--bg-card), 0.95);
         }
 
-        /* Live ticker - CONTINUOUS */
-        .ticker-wrap {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        .ticker {
-            display: inline-block;
-            animation: marquee 30s linear infinite;
-        }
-
-        /* Glassmorphism */
-        .glass-dark {
-            background: rgba(17, 17, 17, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .glass-light {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        /* Midnight mode (Premium) */
-        .midnight {
-            --bg-primary: #02040a;
-            --bg-secondary: #0a0f1e;
-            --bg-card: #111827;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border: #1e293b;
-            --accent: #3b82f6;
-        }
-
-        /* Sepia mode (Premium) */
-        .sepia {
-            --bg-primary: #f5f0e8;
-            --bg-secondary: #ebe5d9;
-            --bg-card: #faf6f0;
-            --text-primary: #433422;
-            --text-secondary: #8c7b6b;
-            --border: #d4c5b0;
-            --accent: #b45309;
+        /* Smooth transitions for theme switch */
+        *, *::before, *::after {
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
         }
     </style>
 </head>
 
-<body class="font-sans antialiased selection:bg-neutral-300 dark:selection:bg-neutral-700 bg-neutral-50 dark:bg-[#050505]">
+<body class="font-sans antialiased bg-theme-body text-theme-main selection:bg-neutral-300 dark:selection:bg-neutral-700">
 
-    <!-- Noise Overlay -->
-    <div class="noise-overlay"></div>
+    <!-- Noise Texture -->
+    <div class="noise"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <!-- Command Palette -->
-    <div id="commandPalette" class="fixed inset-0 z-[60] hidden items-start justify-center pt-[20vh] p-4">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeCommandPalette()"></div>
-        <div class="command-palette relative w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-2xl overflow-hidden animate-fade-in">
-            <div class="flex items-center gap-3 p-4 border-b border-neutral-200 dark:border-neutral-700">
-                <i class="fa-solid fa-magnifying-glass text-neutral-400"></i>
-                <input type="text" id="commandInput" placeholder="Search converters... (e.g., pdf to word)" 
-                    class="w-full bg-transparent font-mono text-sm text-neutral-900 dark:text-white outline-none placeholder:text-neutral-400">
-                <kbd class="hidden sm:inline-block px-2 py-1 rounded bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-500">ESC</kbd>
+    <div id="commandPalette" class="fixed inset-0 z-[70] hidden items-start justify-center pt-[15vh] p-4">
+        <div class="absolute inset-0 modal-backdrop" onclick="closeCommandPalette()"></div>
+        <div class="relative w-full max-w-2xl bg-theme-card border border-theme rounded-2xl shadow-2xl overflow-hidden fade-in">
+            <div class="flex items-center gap-3 p-4 border-b border-theme">
+                <i class="fa-solid fa-magnifying-glass text-theme-dim"></i>
+                <input type="text" id="commandInput" placeholder="Search converters (e.g., PDF to Word)..." 
+                    class="w-full bg-transparent font-mono text-sm text-theme-main outline-none placeholder:text-theme-dim">
+                <kbd class="hidden sm:inline-block px-2 py-1 rounded bg-theme-input font-mono text-xs text-theme-dim border border-theme">ESC</kbd>
             </div>
-            <div id="commandResults" class="max-h-[300px] overflow-y-auto p-2"></div>
+            <div id="commandResults" class="max-h-[320px] overflow-y-auto p-2"></div>
         </div>
     </div>
 
-    <!-- Navigation -->
-    <nav id="navbar" class="fixed top-0 w-full z-50 transition-all duration-300">
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-0 w-full z-50 transition-all duration-300 bg-theme-body/80 backdrop-blur-md border-b border-transparent">
         <div class="max-w-7xl mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
-                <!-- Logo -->
                 <div class="flex items-center gap-3 group cursor-pointer" onclick="window.scrollTo(0,0)">
-                    <div class="w-8 h-8 rounded bg-neutral-900 dark:bg-white flex items-center justify-center animate-pulse-slow">
-                        <i class="fa-solid fa-code text-white dark:text-neutral-900 text-sm"></i>
+                    <div class="w-8 h-8 rounded bg-theme-accent flex items-center justify-center shadow-glow" style="background: var(--accent);">
+                        <i class="fa-solid fa-shuffle text-sm" style="color: var(--accent-text);"></i>
                     </div>
-                    <div class="font-mono font-bold text-xl tracking-tight text-neutral-900 dark:text-white">
-                        Convert<span class="text-neutral-500 dark:text-neutral-400">Flow</span>
-                        <span class="text-xs font-normal text-neutral-400 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">v2.0</span>
+                    <div class="font-bold text-xl tracking-tight text-theme-main">
+                        Convert<span class="text-theme-muted">Flow</span>
                     </div>
                 </div>
 
-                <!-- Nav Links -->
-                <div class="hidden md:flex items-center gap-8 font-mono text-sm">
-                    <a href="#converters" class="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">Converters</a>
-                    <a href="#features" class="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">Features</a>
-                    <a href="#pricing" class="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">Pricing</a>
-                    <a href="#api" class="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">API</a>
+                <div class="hidden md:flex items-center gap-8 text-sm font-medium text-theme-muted">
+                    <a href="#converters" class="hover:text-theme-main transition-colors">Converters</a>
+                    <a href="#features" class="hover:text-theme-main transition-colors">Features</a>
+                    <a href="#pricing" class="hover:text-theme-main transition-colors">Pricing</a>
+                    <a href="#api" class="hover:text-theme-main transition-colors">API</a>
                 </div>
 
-                <!-- Right Actions -->
-                <div class="flex items-center gap-4">
-                    <!-- Command Palette Trigger -->
-                    <button onclick="openCommandPalette()" class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                        <i class="fa-solid fa-command text-xs text-neutral-500"></i>
-                        <span class="font-mono text-xs text-neutral-500">Ctrl K</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="openCommandPalette()" class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border border-theme bg-theme-hover text-theme-dim text-xs font-mono hover:text-theme-main transition-colors">
+                        <i class="fa-solid fa-command"></i>
+                        <span>Ctrl K</span>
                     </button>
 
-                    <!-- Theme Toggle -->
-                    <button id="themeToggle" class="w-10 h-10 rounded-full border border-neutral-200 dark:border-neutral-700 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                        <i class="fa-solid fa-sun text-neutral-600 dark:hidden"></i>
-                        <i class="fa-solid fa-moon text-neutral-400 hidden dark:block"></i>
+                    <button onclick="cycleTheme()" id="themeBtn" class="w-10 h-10 rounded-full border border-theme flex items-center justify-center bg-theme-hover text-theme-muted hover:text-theme-main transition-colors" title="Cycle Theme">
+                        <i class="fa-solid fa-moon" id="themeIcon"></i>
                     </button>
 
-                    <!-- Auth Buttons -->
-                    <div class="hidden sm:flex items-center gap-3 font-mono text-sm">
-                        <button class="px-4 py-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">Sign In</button>
-                        <button class="px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded hover:opacity-90 transition-opacity font-medium">
-                            Get Started
-                        </button>
+                    <div class="hidden sm:flex items-center gap-3 text-sm">
+                        <button class="px-4 py-2 text-theme-muted hover:text-theme-main transition-colors font-medium">Sign In</button>
+                        <button class="px-4 py-2 rounded btn-primary font-medium">Get Started</button>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="relative min-h-screen flex items-center justify-center pt-20 grid-bg overflow-hidden bg-white dark:bg-[#050505]">
-        <!-- Background Elements -->
-        <div class="absolute inset-0 pointer-events-none">
-            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-neutral-200 dark:bg-neutral-800 rounded-full blur-3xl opacity-30 animate-pulse-slow"></div>
-            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neutral-300 dark:bg-neutral-700 rounded-full blur-3xl opacity-20 animate-pulse-slow" style="animation-delay: 1.5s;"></div>
-        </div>
+    <!-- Hero -->
+    <section class="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        <div class="absolute inset-0 grid-bg pointer-events-none"></div>
+        <div class="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-theme-accent/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-theme-accent/5 rounded-full blur-[80px] pointer-events-none"></div>
 
         <div class="relative max-w-5xl mx-auto px-6 text-center">
-            <!-- Badge -->
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm mb-8 animate-slide-up">
-                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">50+ formats supported • 99.9% uptime</span>
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-theme bg-theme-card/50 backdrop-blur-sm mb-8 fade-in">
+                <span class="w-2 h-2 rounded-full bg-green-500 pulse-dot"></span>
+                <span class="font-mono text-xs text-theme-muted">50+ formats supported · 99.9% uptime</span>
             </div>
 
-            <!-- Main Heading -->
-            <h1 class="font-mono font-bold text-5xl md:text-7xl text-neutral-900 dark:text-white mb-6 leading-tight animate-slide-up" style="animation-delay: 0.1s;">
-                <span class="block">Convert Anything</span>
-                <span class="block text-neutral-400 dark:text-neutral-500 mt-2">To Anything<span class="cursor-blink text-neutral-900 dark:text-white">_</span></span>
+            <h1 class="font-bold text-5xl md:text-7xl mb-6 leading-tight fade-in" style="animation-delay: 0.1s;">
+                <span class="block text-theme-main">Convert Anything</span>
+                <span class="block text-theme-dim mt-2">To Anything<span class="cursor-blink"></span></span>
             </h1>
 
-            <!-- Subtitle -->
-            <p class="font-mono text-lg md:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-slide-up" style="animation-delay: 0.2s;">
-                Professional-grade document conversion.<br>
-                Secure, fast, and beautifully minimal.
+            <p class="text-lg md:text-xl text-theme-muted max-w-2xl mx-auto mb-12 leading-relaxed fade-in" style="animation-delay: 0.2s;">
+                Professional-grade document conversion. Secure, fast, and beautifully minimal. 
+                No installation required.
             </p>
 
-            <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style="animation-delay: 0.3s;">
-                <button onclick="document.getElementById('converters').scrollIntoView({behavior: 'smooth'})" 
-                    class="px-8 py-4 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono font-medium hover:scale-105 transition-transform shadow-lg dark:shadow-neutral-800/50">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 fade-in" style="animation-delay: 0.3s;">
+                <button onclick="document.getElementById('converters').scrollIntoView({behavior: 'smooth'})" class="px-8 py-4 rounded btn-primary font-medium text-base shadow-glow">
                     Start Converting
                 </button>
-                <button onclick="openCommandPalette()" class="px-8 py-4 border border-neutral-300 dark:border-neutral-700 rounded font-mono text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+                <button onclick="openCommandPalette()" class="px-8 py-4 rounded btn-secondary font-medium text-base">
                     Quick Search
                 </button>
             </div>
 
-            <!-- Stats -->
-            <div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto animate-slide-up" style="animation-delay: 0.4s;">
+            <div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto fade-in" style="animation-delay: 0.4s;">
                 <div class="text-center">
-                    <div class="font-mono font-bold text-2xl text-neutral-900 dark:text-white">50+</div>
-                    <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mt-1">Formats</div>
+                    <div class="font-bold text-2xl text-theme-main">50+</div>
+                    <div class="font-mono text-xs text-theme-dim mt-1">Formats</div>
                 </div>
                 <div class="text-center">
-                    <div class="font-mono font-bold text-2xl text-neutral-900 dark:text-white">2M+</div>
-                    <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mt-1">Conversions</div>
+                    <div class="font-bold text-2xl text-theme-main">2M+</div>
+                    <div class="font-mono text-xs text-theme-dim mt-1">Conversions</div>
                 </div>
                 <div class="text-center">
-                    <div class="font-mono font-bold text-2xl text-neutral-900 dark:text-white">0.3s</div>
-                    <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mt-1">Avg Speed</div>
+                    <div class="font-bold text-2xl text-theme-main">0.3s</div>
+                    <div class="font-mono text-xs text-theme-dim mt-1">Avg Speed</div>
                 </div>
                 <div class="text-center">
-                    <div class="font-mono font-bold text-2xl text-neutral-900 dark:text-white">100%</div>
-                    <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mt-1">Privacy</div>
+                    <div class="font-bold text-2xl text-theme-main">100%</div>
+                    <div class="font-mono text-xs text-theme-dim mt-1">Privacy</div>
                 </div>
             </div>
         </div>
-
-        <!-- Scroll Indicator -->
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-            <i class="fa-solid fa-chevron-down text-neutral-400 dark:text-neutral-600 text-sm"></i>
-        </div>
     </section>
 
-    <!-- Live Conversions Ticker -->
-    <div class="border-y border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 py-3 overflow-hidden">
+    <!-- Live Ticker -->
+    <div class="border-y border-theme bg-theme-surface py-3 overflow-hidden">
         <div class="ticker-wrap">
-            <div class="ticker font-mono text-xs text-neutral-500 dark:text-neutral-500">
-                <span class="mx-8">🔥 Someone from Mumbai just converted PDF to Word</span>
-                <span class="mx-8">⚡ Someone from London just converted JPG to PDF</span>
-                <span class="mx-8">🚀 Someone from New York just merged 5 PDFs</span>
-                <span class="mx-8">💎 Someone from Tokyo just subscribed to Pro</span>
-                <span class="mx-8">🔥 Someone from Berlin just converted Excel to PDF</span>
-                <span class="mx-8">⚡ Someone from Paris just compressed a 50MB PDF</span>
-                <span class="mx-8">🚀 Someone from Dubai just used OCR extraction</span>
-                <span class="mx-8">💎 Someone from Sydney just converted PPT to PDF</span>
-                <span class="mx-8">🔥 Someone from Mumbai just converted PDF to Word</span>
-                <span class="mx-8">⚡ Someone from London just converted JPG to PDF</span>
-                <span class="mx-8">🚀 Someone from New York just merged 5 PDFs</span>
-                <span class="mx-8">💎 Someone from Tokyo just subscribed to Pro</span>
+            <div class="ticker-track font-mono text-xs text-theme-dim">
+                <span class="inline-flex items-center gap-6 px-6">
+                    <span>🔥 Someone from Mumbai converted PDF to Word</span>
+                    <span>⚡ Someone from London converted JPG to PDF</span>
+                    <span>🚀 Someone from New York merged 12 PDFs</span>
+                    <span>💎 Someone from Tokyo subscribed to Pro</span>
+                    <span>🔥 Someone from Berlin converted Excel to PDF</span>
+                    <span>⚡ Someone from Paris compressed a 50MB file</span>
+                    <span>🚀 Someone from Dubai extracted text with OCR</span>
+                    <span>💎 Someone from Sydney converted PPT to PDF</span>
+                </span>
+                <span class="inline-flex items-center gap-6 px-6" aria-hidden="true">
+                    <span>🔥 Someone from Mumbai converted PDF to Word</span>
+                    <span>⚡ Someone from London converted JPG to PDF</span>
+                    <span>🚀 Someone from New York merged 12 PDFs</span>
+                    <span>💎 Someone from Tokyo subscribed to Pro</span>
+                    <span>🔥 Someone from Berlin converted Excel to PDF</span>
+                    <span>⚡ Someone from Paris compressed a 50MB file</span>
+                    <span>🚀 Someone from Dubai extracted text with OCR</span>
+                    <span>💎 Someone from Sydney converted PPT to PDF</span>
+                </span>
             </div>
         </div>
     </div>
 
-    <!-- Converter Section -->
-    <section id="converters" class="py-24 relative bg-white dark:bg-[#050505]">
+    <!-- Converters -->
+    <section id="converters" class="py-24 relative">
         <div class="max-w-7xl mx-auto px-6">
-            <!-- Section Header -->
             <div class="text-center mb-16">
-                <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mb-2">// 01</div>
-                <h2 class="font-mono font-bold text-3xl md:text-4xl text-neutral-900 dark:text-white mb-4">Universal Converter</h2>
-                <p class="font-mono text-sm text-neutral-500 dark:text-neutral-400">Drag. Drop. Done.</p>
+                <div class="font-mono text-xs text-theme-dim mb-2">01</div>
+                <h2 class="font-bold text-3xl md:text-4xl text-theme-main mb-3">Universal Converter</h2>
+                <p class="font-mono text-sm text-theme-muted">Drag, drop, and download. That's it.</p>
             </div>
 
-            <!-- Upload Zone -->
             <div class="max-w-3xl mx-auto mb-16">
-                <div id="uploadZone" class="upload-zone relative border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-2xl p-12 text-center cursor-pointer hover:border-neutral-900 dark:hover:border-white transition-all duration-300 group bg-neutral-50 dark:bg-neutral-900/50">
+                <div id="uploadZone" class="upload-zone relative rounded-2xl p-12 text-center cursor-pointer bg-theme-card group">
                     <input type="file" id="fileInput" class="hidden" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp,.xls,.xlsx,.ppt,.pptx,.html,.md">
-                    
-                    <div class="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-neutral-600 dark:text-neutral-400"></i>
+                    <div class="w-16 h-16 rounded-full bg-theme-input flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-theme-muted"></i>
                     </div>
-                    
-                    <h3 class="font-mono font-medium text-lg text-neutral-900 dark:text-white mb-2">
-                        Drop Files Here<span class="text-neutral-400">. Or Click</span>
-                    </h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">
-                        Supports: PDF, DOC, DOCX, TXT, JPG, PNG, WEBP, XLS, XLSX, PPT, HTML, MD<br>
-                        Max file size: 100MB • Secure SSL encryption
+                    <h3 class="font-medium text-lg text-theme-main mb-2">Drop files here <span class="text-theme-dim">or click to browse</span></h3>
+                    <p class="font-mono text-xs text-theme-muted">
+                        Supports: PDF, DOCX, TXT, JPG, PNG, WEBP, XLSX, PPT, HTML, MD<br>
+                        Max size: 100MB · SSL Encrypted
                     </p>
-
-                    <!-- Quick Format Tags -->
                     <div class="flex flex-wrap justify-center gap-2 mt-6">
-                        <span class="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-600 dark:text-neutral-400">PDF</span>
-                        <span class="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-600 dark:text-neutral-400">DOCX</span>
-                        <span class="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-600 dark:text-neutral-400">TXT</span>
-                        <span class="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-600 dark:text-neutral-400">JPG</span>
-                        <span class="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-600 dark:text-neutral-400">PNG</span>
-                        <span class="px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 font-mono text-xs text-neutral-600 dark:text-neutral-400">XLSX</span>
+                        <span class="px-3 py-1 rounded-full bg-theme-input font-mono text-xs text-theme-muted border border-theme">PDF</span>
+                        <span class="px-3 py-1 rounded-full bg-theme-input font-mono text-xs text-theme-muted border border-theme">DOCX</span>
+                        <span class="px-3 py-1 rounded-full bg-theme-input font-mono text-xs text-theme-muted border border-theme">TXT</span>
+                        <span class="px-3 py-1 rounded-full bg-theme-input font-mono text-xs text-theme-muted border border-theme">JPG</span>
+                        <span class="px-3 py-1 rounded-full bg-theme-input font-mono text-xs text-theme-muted border border-theme">PNG</span>
+                        <span class="px-3 py-1 rounded-full bg-theme-input font-mono text-xs text-theme-muted border border-theme">XLSX</span>
                     </div>
                 </div>
 
-                <!-- File List & Conversion UI -->
                 <div id="conversionArea" class="hidden mt-8 space-y-4"></div>
             </div>
 
-            <!-- Converter Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- Card 1 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('text-to-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('text-to-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-file-lines text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">TXT → PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-file-lines text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">TXT → PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Text to PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Convert plain text, markdown, and code files to formatted PDF documents</p>
+                    <h3 class="font-medium text-theme-main mb-1">Text to PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Convert plain text, markdown, and code files to formatted PDF documents.</p>
                 </div>
 
-                <!-- Card 2 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('word-to-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('word-to-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-file-word text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">DOCX → PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-file-word text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">DOCX → PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Word to PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Preserve formatting, fonts, and layouts from Word documents</p>
+                    <h3 class="font-medium text-theme-main mb-1">Word to PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Preserve formatting, fonts, and layouts from Word documents.</p>
                 </div>
 
-                <!-- Card 3 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('pdf-to-word')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('pdf-to-word')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-file-pdf text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">PDF → DOCX</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-file-pdf text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">PDF → DOCX</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">PDF to Word</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Extract text and images from PDFs into editable Word files</p>
+                    <h3 class="font-medium text-theme-main mb-1">PDF to Word</h3>
+                    <p class="font-mono text-xs text-theme-muted">Extract text and images from PDFs into editable Word files.</p>
                 </div>
 
-                <!-- Card 4 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('image-to-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('image-to-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-image text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">IMG → PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-image text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">IMG → PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Image to PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Merge multiple images into a single PDF or convert individually</p>
+                    <h3 class="font-medium text-theme-main mb-1">Image to PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Merge multiple images into a single PDF or convert individually.</p>
                 </div>
 
-                <!-- Card 5 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('pdf-to-image')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('pdf-to-image')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-images text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">PDF → IMG</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-images text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">PDF → IMG</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">PDF to Image</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Convert PDF pages to high-resolution PNG, JPG, or WebP</p>
+                    <h3 class="font-medium text-theme-main mb-1">PDF to Image</h3>
+                    <p class="font-mono text-xs text-theme-muted">Convert PDF pages to high-resolution PNG, JPG, or WebP.</p>
                 </div>
 
-                <!-- Card 6 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('merge-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('merge-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-object-group text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">PDF + PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-object-group text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">PDF + PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Merge PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Combine multiple PDFs into one with custom page ordering</p>
+                    <h3 class="font-medium text-theme-main mb-1">Merge PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Combine multiple PDFs into one with custom page ordering.</p>
                 </div>
 
-                <!-- Card 7 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('split-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('split-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-scissors text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">PDF → PDFs</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-scissors text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">PDF → PDFs</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Split PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Extract specific pages or split by page ranges</p>
+                    <h3 class="font-medium text-theme-main mb-1">Split PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Extract specific pages or split by page ranges into separate files.</p>
                 </div>
 
-                <!-- Card 8 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('compress-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('compress-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-compress text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">PDF → PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-compress text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">PDF → PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Compress PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Reduce file size while maintaining quality up to 80%</p>
+                    <h3 class="font-medium text-theme-main mb-1">Compress PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Reduce file size while maintaining quality. Up to 80% smaller.</p>
                 </div>
 
-                <!-- Card 9 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('excel-to-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('excel-to-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-file-excel text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">XLSX → PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-file-excel text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">XLSX → PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Excel to PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Convert spreadsheets with preserved formulas and formatting</p>
+                    <h3 class="font-medium text-theme-main mb-1">Excel to PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Convert spreadsheets with preserved formulas, tables, and formatting.</p>
                 </div>
 
-                <!-- Card 10 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('ppt-to-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('ppt-to-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-file-powerpoint text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">PPT → PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-file-powerpoint text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">PPT → PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">PPT to PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Transform presentations into slide-perfect PDF documents</p>
+                    <h3 class="font-medium text-theme-main mb-1">PowerPoint to PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Transform presentations into slide-perfect PDF documents.</p>
                 </div>
 
-                <!-- Card 11 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('html-to-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('html-to-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-brands fa-html5 text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">HTML → PDF</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-brands fa-html5 text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">HTML → PDF</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">HTML to PDF</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Render web pages and HTML templates as print-ready PDFs</p>
+                    <h3 class="font-medium text-theme-main mb-1">HTML to PDF</h3>
+                    <p class="font-mono text-xs text-theme-muted">Render web pages and HTML templates as print-ready PDFs.</p>
                 </div>
 
-                <!-- Card 12 -->
-                <div class="converter-card group p-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer transition-all" onclick="selectConverter('ocr-pdf')">
+                <div class="converter-card p-6 rounded-xl border border-theme bg-theme-card cursor-pointer" onclick="selectConverter('ocr-pdf')">
                     <div class="flex items-start justify-between mb-4">
-                        <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                            <i class="fa-solid fa-eye text-neutral-600 dark:text-neutral-400"></i>
-                        </div>
-                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-600">IMG → TXT</span>
+                        <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center"><i class="fa-solid fa-eye text-theme-muted"></i></div>
+                        <span class="font-mono text-xs text-theme-dim">IMG → TXT</span>
                     </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">OCR Extraction</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Extract editable text from scanned images and PDFs</p>
+                    <h3 class="font-medium text-theme-main mb-1">OCR Extraction</h3>
+                    <p class="font-mono text-xs text-theme-muted">Extract editable text from scanned images and PDFs using AI.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="py-24 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#050505]">
+    <!-- Features -->
+    <section id="features" class="py-24 border-t border-theme">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
-                <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mb-2">// 02</div>
-                <h2 class="font-mono font-bold text-3xl md:text-4xl text-neutral-900 dark:text-white mb-4">Why ConvertFlow</h2>
+                <div class="font-mono text-xs text-theme-dim mb-2">02</div>
+                <h2 class="font-bold text-3xl md:text-4xl text-theme-main mb-3">Why ConvertFlow</h2>
+                <p class="font-mono text-sm text-theme-muted">Built for professionals who value speed and privacy.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="p-6 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800">
-                    <div class="w-12 h-12 rounded-lg bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                        <i class="fa-solid fa-shield-halved text-neutral-700 dark:text-neutral-300"></i>
-                    </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-2">Bank Grade Security</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500 leading-relaxed">AES-256 encryption. Files auto-delete after 1 hour. Zero data retention.</p>
+                <div class="p-6 rounded-xl bg-theme-surface border border-theme">
+                    <div class="w-12 h-12 rounded-lg bg-theme-input flex items-center justify-center mb-4"><i class="fa-solid fa-shield-halved text-theme-main"></i></div>
+                    <h3 class="font-medium text-theme-main mb-2">Bank-Grade Security</h3>
+                    <p class="font-mono text-xs text-theme-muted leading-relaxed">AES-256 encryption. Files auto-delete after 1 hour. Zero data retention.</p>
                 </div>
-
-                <div class="p-6 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800">
-                    <div class="w-12 h-12 rounded-lg bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                        <i class="fa-solid fa-bolt text-neutral-700 dark:text-neutral-300"></i>
-                    </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-2">Lightning Fast</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500 leading-relaxed">GPU-accelerated processing. Average conversion time under 300 milliseconds.</p>
+                <div class="p-6 rounded-xl bg-theme-surface border border-theme">
+                    <div class="w-12 h-12 rounded-lg bg-theme-input flex items-center justify-center mb-4"><i class="fa-solid fa-bolt text-theme-main"></i></div>
+                    <h3 class="font-medium text-theme-main mb-2">Lightning Fast</h3>
+                    <p class="font-mono text-xs text-theme-muted leading-relaxed">GPU-accelerated processing. Average conversion time under 300ms.</p>
                 </div>
-
-                <div class="p-6 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800">
-                    <div class="w-12 h-12 rounded-lg bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                        <i class="fa-solid fa-brain text-neutral-700 dark:text-neutral-300"></i>
-                    </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-2">AI Powered OCR</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500 leading-relaxed">Machine learning extraction with 99.2% accuracy on scanned documents.</p>
+                <div class="p-6 rounded-xl bg-theme-surface border border-theme">
+                    <div class="w-12 h-12 rounded-lg bg-theme-input flex items-center justify-center mb-4"><i class="fa-solid fa-brain text-theme-main"></i></div>
+                    <h3 class="font-medium text-theme-main mb-2">AI-Powered OCR</h3>
+                    <p class="font-mono text-xs text-theme-muted leading-relaxed">Machine learning extraction with 99.2% accuracy on scanned documents.</p>
                 </div>
-
-                <div class="p-6 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800">
-                    <div class="w-12 h-12 rounded-lg bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center mb-4">
-                        <i class="fa-solid fa-code text-neutral-700 dark:text-neutral-300"></i>
-                    </div>
-                    <h3 class="font-mono font-medium text-neutral-900 dark:text-white mb-2">Developer API</h3>
-                    <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500 leading-relaxed">RESTful API with SDKs for Python, Node.js, Ruby, and Go.</p>
+                <div class="p-6 rounded-xl bg-theme-surface border border-theme">
+                    <div class="w-12 h-12 rounded-lg bg-theme-input flex items-center justify-center mb-4"><i class="fa-solid fa-code text-theme-main"></i></div>
+                    <h3 class="font-medium text-theme-main mb-2">Developer API</h3>
+                    <p class="font-mono text-xs text-theme-muted leading-relaxed">RESTful API with SDKs for Python, Node.js, Ruby, and Go.</p>
                 </div>
             </div>
 
-            <!-- Code Preview -->
             <div class="mt-16 max-w-3xl mx-auto">
-                <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-900 dark:bg-black overflow-hidden">
-                    <div class="flex items-center gap-2 px-4 py-3 border-b border-neutral-800">
+                <div class="rounded-xl border border-theme bg-theme-surface overflow-hidden shadow-glow">
+                    <div class="flex items-center gap-2 px-4 py-3 border-b border-theme">
                         <div class="w-3 h-3 rounded-full bg-red-500"></div>
                         <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                         <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span class="ml-2 font-mono text-xs text-neutral-500">api_example.js</span>
+                        <span class="ml-2 font-mono text-xs text-theme-dim">api_example.js</span>
                     </div>
                     <div class="p-6 overflow-x-auto">
-                        <pre class="font-mono text-sm leading-relaxed">
-<span class="text-purple-400">const</span> <span class="text-blue-400">ConvertFlow</span> <span class="text-neutral-500">=</span> <span class="text-blue-400">require</span><span class="text-neutral-400">(</span><span class="text-green-400">'convertflow-sdk'</span><span class="text-neutral-400">)</span><span class="text-neutral-500">;</span>
+                        <pre class="font-mono text-sm leading-relaxed text-theme-muted">
+<span class="text-purple-400">const</span> <span class="text-blue-400">ConvertFlow</span> <span class="text-theme-dim">=</span> <span class="text-blue-400">require</span><span class="text-theme-dim">(</span><span class="text-green-400">'convertflow-sdk'</span><span class="text-theme-dim">)</span><span class="text-theme-dim">;</span>
 
-<span class="text-purple-400">const</span> <span class="text-blue-400">client</span> <span class="text-neutral-500">=</span> <span class="text-purple-400">new</span> <span class="text-yellow-400">ConvertFlow</span><span class="text-neutral-400">({</span>
-  <span class="text-blue-400">apiKey</span><span class="text-neutral-500">:</span> <span class="text-green-400">'cf_live_xxxxxxxx'</span><span class="text-neutral-500">,</span>
-  <span class="text-blue-400">region</span><span class="text-neutral-500">:</span> <span class="text-green-400">'us-east-1'</span>
-<span class="text-neutral-400">})</span><span class="text-neutral-500">;</span>
+<span class="text-purple-400">const</span> <span class="text-blue-400">client</span> <span class="text-theme-dim">=</span> <span class="text-purple-400">new</span> <span class="text-yellow-400">ConvertFlow</span><span class="text-theme-dim">({</span>
+  <span class="text-blue-400">apiKey</span><span class="text-theme-dim">:</span> <span class="text-green-400">'cf_live_xxxxxxxx'</span><span class="text-theme-dim">,</span>
+  <span class="text-blue-400">region</span><span class="text-theme-dim">:</span> <span class="text-green-400">'us-east-1'</span>
+<span class="text-theme-dim">})</span><span class="text-theme-dim">;</span>
 
-<span class="text-gray-500">// Convert Word to PDF in one line</span>
-<span class="text-purple-400">await</span> <span class="text-blue-400">client</span><span class="text-neutral-500">.</span><span class="text-yellow-400">convert</span><span class="text-neutral-400">({</span>
-  <span class="text-blue-400">file</span><span class="text-neutral-500">:</span> <span class="text-green-400">'document.docx'</span><span class="text-neutral-500">,</span>
-  <span class="text-blue-400">to</span><span class="text-neutral-500">:</span> <span class="text-green-400">'pdf'</span><span class="text-neutral-500">,</span>
-  <span class="text-blue-400">quality</span><span class="text-neutral-500">:</span> <span class="text-green-400">'high'</span>
-<span class="text-neutral-400">})</span><span class="text-neutral-500">;</span></pre>
+<span class="text-theme-dim">// Convert Word to PDF in one line</span>
+<span class="text-purple-400">await</span> <span class="text-blue-400">client</span><span class="text-theme-dim">.</span><span class="text-yellow-400">convert</span><span class="text-theme-dim">({</span>
+  <span class="text-blue-400">file</span><span class="text-theme-dim">:</span> <span class="text-green-400">'document.docx'</span><span class="text-theme-dim">,</span>
+  <span class="text-blue-400">to</span><span class="text-theme-dim">:</span> <span class="text-green-400">'pdf'</span><span class="text-theme-dim">,</span>
+  <span class="text-blue-400">quality</span><span class="text-theme-dim">:</span> <span class="text-green-400">'high'</span>
+<span class="text-theme-dim">})</span><span class="text-theme-dim">;</span></pre>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-24 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#050505]">
+    <!-- Pricing -->
+    <section id="pricing" class="py-24 border-t border-theme">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
-                <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mb-2">// 03</div>
-                <h2 class="font-mono font-bold text-3xl md:text-4xl text-neutral-900 dark:text-white mb-4">Simple Pricing</h2>
-                <p class="font-mono text-sm text-neutral-500 dark:text-neutral-400">No hidden fees. Cancel anytime.</p>
+                <div class="font-mono text-xs text-theme-dim mb-2">03</div>
+                <h2 class="font-bold text-3xl md:text-4xl text-theme-main mb-3">Simple Pricing</h2>
+                <p class="font-mono text-sm text-theme-muted">No hidden fees. Cancel anytime.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                <!-- Free Tier -->
-                <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-8 bg-white dark:bg-neutral-900 relative">
+                <div class="rounded-xl border border-theme p-8 bg-theme-card">
                     <div class="mb-6">
-                        <h3 class="font-mono font-medium text-lg text-neutral-900 dark:text-white mb-2">Hobby</h3>
-                        <div class="font-mono text-3xl font-bold text-neutral-900 dark:text-white">$0<span class="text-sm font-normal text-neutral-500">/mo</span></div>
+                        <h3 class="font-medium text-lg text-theme-main mb-2">Hobby</h3>
+                        <div class="font-bold text-3xl text-theme-main">$0<span class="text-sm font-normal text-theme-dim">/mo</span></div>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            10 conversions/day
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Max 5MB file size
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            5 formats supported
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-500">
-                            <i class="fa-solid fa-xmark text-neutral-400 text-xs"></i>
-                            No API access
-                        </li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> 10 conversions/day</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Max 5MB file size</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> 5 formats supported</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-dim"><i class="fa-solid fa-xmark text-theme-dim text-xs"></i> No API access</li>
                     </ul>
-                    <button class="w-full py-3 rounded border border-neutral-300 dark:border-neutral-700 font-mono text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-                        Start Free
-                    </button>
+                    <button class="w-full py-3 rounded btn-secondary font-mono text-sm">Start Free</button>
                 </div>
 
-                <!-- Pro Tier -->
-                <div class="rounded-xl border-2 border-neutral-900 dark:border-white p-8 bg-white dark:bg-neutral-900 relative transform md:-translate-y-4 shadow-xl dark:shadow-neutral-900">
+                <div class="rounded-xl border-2 border-theme p-8 bg-theme-card relative transform md:-translate-y-4 shadow-glow">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span class="px-3 py-1 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-mono text-xs rounded-full">Most Popular</span>
+                        <span class="px-3 py-1 bg-theme-accent rounded-full font-mono text-xs" style="background: var(--accent); color: var(--accent-text);">Most Popular</span>
                     </div>
                     <div class="mb-6">
-                        <h3 class="font-mono font-medium text-lg text-neutral-900 dark:text-white mb-2">Pro</h3>
-                        <div class="font-mono text-3xl font-bold text-neutral-900 dark:text-white">$4.99<span class="text-sm font-normal text-neutral-500">/mo</span></div>
+                        <h3 class="font-medium text-lg text-theme-main mb-2">Pro</h3>
+                        <div class="font-bold text-3xl text-theme-main">$4.99<span class="text-sm font-normal text-theme-dim">/mo</span></div>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Unlimited conversions
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Max 100MB file size
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            All 50+ formats
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            API: 1,000 calls/mo
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Priority processing
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            OCR included
-                        </li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Unlimited conversions</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Max 100MB file size</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> All 50+ formats</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> API: 1,000 calls/mo</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Priority processing</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> OCR included</li>
                     </ul>
-                    <a href="https://vencodeofficial.lemonsqueezy.com/checkout/buy/fd711d9c-48fb-4523-a301-d9bf38a5b290?desc=0&discount=0" 
-                       target="_blank"
-                       class="w-full py-3 rounded bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 font-mono text-sm hover:opacity-90 transition-opacity font-medium block text-center">
-                        Subscribe Pro
-                    </a>
+                    <a href="https://vencodeofficial.lemonsqueezy.com/checkout/buy/fd711d9c-48fb-4523-a301-d9bf38a5b290?desc=0&discount=0" target="_blank" class="block w-full py-3 rounded btn-primary font-mono text-sm text-center font-medium">Subscribe to Pro</a>
                 </div>
 
-                <!-- Enterprise Tier -->
-                <div class="rounded-xl border border-neutral-200 dark:border-neutral-800 p-8 bg-white dark:bg-neutral-900 relative">
+                <div class="rounded-xl border border-theme p-8 bg-theme-card">
                     <div class="mb-6">
-                        <h3 class="font-mono font-medium text-lg text-neutral-900 dark:text-white mb-2">Enterprise</h3>
-                        <div class="font-mono text-3xl font-bold text-neutral-900 dark:text-white">$19.99<span class="text-sm font-normal text-neutral-500">/mo</span></div>
+                        <h3 class="font-medium text-lg text-theme-main mb-2">Enterprise</h3>
+                        <div class="font-bold text-3xl text-theme-main">$19.99<span class="text-sm font-normal text-theme-dim">/mo</span></div>
                     </div>
                     <ul class="space-y-3 mb-8">
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Everything in Pro
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Max 500MB file size
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            API: 50,000 calls/mo
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Custom integrations
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            Dedicated support
-                        </li>
-                        <li class="flex items-center gap-3 font-mono text-sm text-neutral-600 dark:text-neutral-400">
-                            <i class="fa-solid fa-check text-green-500 text-xs"></i>
-                            SLA guarantee
-                        </li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Everything in Pro</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Max 500MB file size</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> API: 50,000 calls/mo</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Custom integrations</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> Dedicated support</li>
+                        <li class="flex items-center gap-3 font-mono text-sm text-theme-muted"><i class="fa-solid fa-check text-green-500 text-xs"></i> SLA guarantee</li>
                     </ul>
-                    <button class="w-full py-3 rounded border border-neutral-300 dark:border-neutral-700 font-mono text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-                        Contact Sales
-                    </button>
+                    <button class="w-full py-3 rounded btn-secondary font-mono text-sm">Contact Sales</button>
                 </div>
             </div>
 
-            <!-- Trust Badges -->
             <div class="mt-16 flex flex-wrap justify-center items-center gap-8 opacity-50">
-                <div class="font-mono text-xs text-neutral-500">SOC 2 Type II</div>
-                <div class="w-1 h-1 rounded-full bg-neutral-400"></div>
-                <div class="font-mono text-xs text-neutral-500">GDPR Compliant</div>
-                <div class="w-1 h-1 rounded-full bg-neutral-400"></div>
-                <div class="font-mono text-xs text-neutral-500">ISO 27001</div>
-                <div class="w-1 h-1 rounded-full bg-neutral-400"></div>
-                <div class="font-mono text-xs text-neutral-500">HIPAA Ready</div>
+                <span class="font-mono text-xs text-theme-muted">SOC 2 Type II</span>
+                <div class="w-1 h-1 rounded-full bg-theme-dim"></div>
+                <span class="font-mono text-xs text-theme-muted">GDPR Compliant</span>
+                <div class="w-1 h-1 rounded-full bg-theme-dim"></div>
+                <span class="font-mono text-xs text-theme-muted">ISO 27001</span>
+                <div class="w-1 h-1 rounded-full bg-theme-dim"></div>
+                <span class="font-mono text-xs text-theme-muted">HIPAA Ready</span>
             </div>
         </div>
     </section>
 
     <!-- API Section -->
-    <section id="api" class="py-24 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#050505]">
+    <section id="api" class="py-24 border-t border-theme">
         <div class="max-w-7xl mx-auto px-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <div class="font-mono text-xs text-neutral-500 dark:text-neutral-500 mb-2">// 04</div>
-                    <h2 class="font-mono font-bold text-3xl md:text-4xl text-neutral-900 dark:text-white mb-6">Built for Developers</h2>
-                    <p class="font-mono text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed mb-8">
+                    <div class="font-mono text-xs text-theme-dim mb-2">04</div>
+                    <h2 class="font-bold text-3xl md:text-4xl text-theme-main mb-6">Built for Developers</h2>
+                    <p class="text-sm text-theme-muted leading-relaxed mb-8">
                         Integrate document conversion into your application with our RESTful API. 
                         Webhooks, batch processing, and custom workflows supported out of the box.
                     </p>
-                    
                     <div class="space-y-4">
                         <div class="flex items-start gap-4">
-                            <div class="w-8 h-8 rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0 mt-1">
-                                <span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">01</span>
-                            </div>
-                            <div>
-                                <h4 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">REST API</h4>
-                                <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Simple HTTP endpoints with JSON responses</p>
-                            </div>
+                            <div class="w-8 h-8 rounded bg-theme-input flex items-center justify-center flex-shrink-0 mt-1"><span class="font-mono text-xs text-theme-muted">01</span></div>
+                            <div><h4 class="font-medium text-theme-main mb-1">REST API</h4><p class="font-mono text-xs text-theme-muted">Simple HTTP endpoints with JSON responses</p></div>
                         </div>
                         <div class="flex items-start gap-4">
-                            <div class="w-8 h-8 rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0 mt-1">
-                                <span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">02</span>
-                            </div>
-                            <div>
-                                <h4 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">Webhooks</h4>
-                                <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Real-time notifications on conversion completion</p>
-                            </div>
+                            <div class="w-8 h-8 rounded bg-theme-input flex items-center justify-center flex-shrink-0 mt-1"><span class="font-mono text-xs text-theme-muted">02</span></div>
+                            <div><h4 class="font-medium text-theme-main mb-1">Webhooks</h4><p class="font-mono text-xs text-theme-muted">Real-time notifications on conversion completion</p></div>
                         </div>
                         <div class="flex items-start gap-4">
-                            <div class="w-8 h-8 rounded bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0 mt-1">
-                                <span class="font-mono text-xs text-neutral-600 dark:text-neutral-400">03</span>
-                            </div>
-                            <div>
-                                <h4 class="font-mono font-medium text-neutral-900 dark:text-white mb-1">SDKs</h4>
-                                <p class="font-mono text-xs text-neutral-500 dark:text-neutral-500">Native packages for Python, Node, Ruby, Go, PHP</p>
-                            </div>
+                            <div class="w-8 h-8 rounded bg-theme-input flex items-center justify-center flex-shrink-0 mt-1"><span class="font-mono text-xs text-theme-muted">03</span></div>
+                            <div><h4 class="font-medium text-theme-main mb-1">SDKs</h4><p class="font-mono text-xs text-theme-muted">Native packages for Python, Node, Ruby, Go, PHP</p></div>
                         </div>
                     </div>
-
                     <div class="mt-8 flex gap-4">
-                        <button class="px-6 py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono text-sm hover:opacity-90 transition-opacity">
-                            Read Docs
-                        </button>
-                        <button class="px-6 py-3 border border-neutral-300 dark:border-neutral-700 rounded font-mono text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
-                            Get API Key
-                        </button>
+                        <button class="px-6 py-3 rounded btn-primary font-mono text-sm">Read Docs</button>
+                        <button class="px-6 py-3 rounded btn-secondary font-mono text-sm">Get API Key</button>
                     </div>
                 </div>
 
                 <div class="relative">
-                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-200 to-transparent dark:from-neutral-800 rounded-xl blur-2xl opacity-50"></div>
-                    <div class="relative rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 shadow-2xl">
-                        <div class="flex items-center gap-2 mb-4 pb-4 border-b border-neutral-100 dark:border-neutral-800">
+                    <div class="absolute inset-0 bg-gradient-to-r from-theme-accent/20 to-transparent rounded-xl blur-2xl opacity-50"></div>
+                    <div class="relative rounded-xl border border-theme bg-theme-card p-6 shadow-glow">
+                        <div class="flex items-center gap-2 mb-4 pb-4 border-b border-theme">
                             <div class="w-3 h-3 rounded-full bg-red-400"></div>
                             <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
                             <div class="w-3 h-3 rounded-full bg-green-400"></div>
-                            <span class="ml-2 font-mono text-xs text-neutral-400">terminal</span>
+                            <span class="ml-2 font-mono text-xs text-theme-dim">terminal</span>
                         </div>
-                        <div class="font-mono text-sm space-y-2">
-                            <div class="text-neutral-500 dark:text-neutral-600">$ npm install convertflow-sdk</div>
-                            <div class="text-neutral-500 dark:text-neutral-600">$</div>
-                            <div class="text-green-600 dark:text-green-400">✓</div> package installed successfully
-                            <div class="text-neutral-500 dark:text-neutral-600">$ node convert.js</div>
-                            <div class="text-blue-600 dark:text-blue-400">→</div> uploading document.docx...
-                            <div class="text-blue-600 dark:text-blue-400">→</div> converting to PDF...
-                            <div class="text-green-600 dark:text-green-400">✓</div> conversion complete: 0.24s
-                            <div class="text-blue-600 dark:text-blue-400">→</div> downloading output.pdf...
-                            <div class="text-green-600 dark:text-green-400">✓</div> saved to ./downloads/output.pdf
-                            <div class="text-neutral-500 dark:text-neutral-600">$ <span class="cursor-blink">_</span></div>
+                        <div class="font-mono text-sm space-y-2 text-theme-muted">
+                            <div>$ npm install convertflow-sdk</div>
+                            <div>$</div>
+                            <div class="text-green-500">✓</div> package installed successfully
+                            <div>$ node convert.js</div>
+                            <div class="text-blue-400">→</div> uploading document.docx...
+                            <div class="text-blue-400">→</div> converting to PDF...
+                            <div class="text-green-500">✓</div> conversion complete: 0.24s
+                            <div class="text-blue-400">→</div> downloading output.pdf...
+                            <div class="text-green-500">✓</div> saved to ./downloads/output.pdf
+                            <div>$ <span class="cursor-blink"></span></div>
                         </div>
                     </div>
                 </div>
@@ -850,357 +778,556 @@
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-neutral-200 dark:border-neutral-800 py-12 bg-white dark:bg-[#050505]">
+    <footer class="border-t border-theme py-12">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="flex items-center gap-3">
-                    <div class="w-6 h-6 rounded bg-neutral-900 dark:bg-white flex items-center justify-center">
-                        <i class="fa-solid fa-code text-white dark:text-neutral-900 text-xs"></i>
-                    </div>
-                    <span class="font-mono font-bold text-neutral-900 dark:text-white">ConvertFlow</span>
+                    <div class="w-6 h-6 rounded flex items-center justify-center" style="background: var(--accent);"><i class="fa-solid fa-code text-xs" style="color: var(--accent-text);"></i></div>
+                    <span class="font-bold text-theme-main">ConvertFlow</span>
                 </div>
-                
-                <div class="flex items-center gap-6 font-mono text-xs text-neutral-500 dark:text-neutral-500">
-                    <a href="#" class="hover:text-neutral-900 dark:hover:text-white transition-colors">Privacy</a>
-                    <a href="#" class="hover:text-neutral-900 dark:hover:text-white transition-colors">Terms</a>
-                    <a href="#" class="hover:text-neutral-900 dark:hover:text-white transition-colors">Security</a>
-                    <a href="#" class="hover:text-neutral-900 dark:hover:text-white transition-colors">Status</a>
-                    <a href="#" class="hover:text-neutral-900 dark:hover:text-white transition-colors">GitHub</a>
+                <div class="flex items-center gap-6 font-mono text-xs text-theme-muted">
+                    <a href="#" class="hover:text-theme-main transition-colors">Privacy</a>
+                    <a href="#" class="hover:text-theme-main transition-colors">Terms</a>
+                    <a href="#" class="hover:text-theme-main transition-colors">Security</a>
+                    <a href="#" class="hover:text-theme-main transition-colors">Status</a>
+                    <a href="#" class="hover:text-theme-main transition-colors">GitHub</a>
                 </div>
-
-                <div class="font-mono text-xs text-neutral-400 dark:text-neutral-600">
-                    © 2026 ConvertFlow Inc.
-                </div>
+                <div class="font-mono text-xs text-theme-dim">© 2026 ConvertFlow Inc.</div>
             </div>
         </div>
     </footer>
 
     <!-- Conversion Modal -->
     <div id="conversionModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal()"></div>
-        <div class="relative bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-8 max-w-md w-full shadow-2xl animate-fade-in">
-            <button onclick="closeModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center transition-colors">
-                <i class="fa-solid fa-xmark text-neutral-500"></i>
+        <div class="absolute inset-0 modal-backdrop" onclick="closeModal()"></div>
+        <div class="relative bg-theme-card border border-theme rounded-2xl p-8 max-w-md w-full shadow-glow fade-in">
+            <button onclick="closeModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-theme-hover flex items-center justify-center text-theme-muted hover:text-theme-main transition-colors">
+                <i class="fa-solid fa-xmark"></i>
             </button>
-            
             <div class="text-center mb-6">
-                <div class="w-12 h-12 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
-                    <i class="fa-solid fa-gear fa-spin text-neutral-600 dark:text-neutral-400"></i>
+                <div class="w-12 h-12 rounded-full bg-theme-input flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-gear fa-spin text-theme-muted"></i>
                 </div>
-                <h3 class="font-mono font-medium text-lg text-neutral-900 dark:text-white mb-2" id="modalTitle">Converting...</h3>
-                <p class="font-mono text-xs text-neutral-500" id="modalSubtitle">Processing your file</p>
+                <h3 class="font-medium text-lg text-theme-main mb-2" id="modalTitle">Converting...</h3>
+                <p class="font-mono text-xs text-theme-muted" id="modalSubtitle">Processing your file</p>
             </div>
-
             <div class="space-y-4">
-                <div class="h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                    <div id="progressBar" class="h-full bg-neutral-900 dark:bg-white progress-stripe rounded-full transition-all duration-300" style="width: 0%"></div>
+                <div class="h-2 bg-theme-input rounded-full overflow-hidden">
+                    <div id="progressBar" class="h-full progress-fill rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
-                <div class="flex justify-between font-mono text-xs text-neutral-500">
+                <div class="flex justify-between font-mono text-xs text-theme-muted">
                     <span id="progressText">0%</span>
-                    <span id="progressSize">0MB / 0MB</span>
+                    <span id="progressSize">0 MB / 0 MB</span>
                 </div>
             </div>
-
             <div id="modalSuccess" class="hidden mt-6 text-center">
-                <a id="downloadBtn" href="#" target="_blank" class="w-full py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono text-sm hover:opacity-90 transition-opacity block text-center">
-                    <i class="fa-solid fa-download mr-2"></i>Download File
+                <a id="downloadBtn" href="#" class="w-full py-3 rounded btn-primary font-mono text-sm block text-center font-medium">
+                    <i class="fa-solid fa-download mr-2"></i> Download File
                 </a>
             </div>
         </div>
     </div>
 
+    <!-- Main Script -->
     <script>
-        // ===== API URL =====
-        const API_URL = 'https://convertflow-api.onrender.com';
+        // ===== THEME SYSTEM (4 MODES) =====
+        const themes = ['light', 'dark', 'cyber', 'midnight'];
+        const themeIcons = { light: 'fa-sun', dark: 'fa-moon', cyber: 'fa-terminal', midnight: 'fa-wand-magic-sparkles' };
+        const themeLabels = { light: 'Light', dark: 'Dark', cyber: 'Terminal', midnight: 'Aurora' };
 
-        // ===== THEME FIX: localStorage + System + Toggle =====
-        const themeToggle = document.getElementById('themeToggle');
-        const html = document.documentElement;
+        function initTheme() {
+            const saved = localStorage.getItem('cf-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateThemeIcon(saved);
+        }
 
-        // Toggle function
-        themeToggle.addEventListener('click', () => {
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
-        });
+        function cycleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = themes[(themes.indexOf(current) + 1) % themes.length];
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('cf-theme', next);
+            updateThemeIcon(next);
+            showToast(`Switched to ${themeLabels[next]} mode`, 'success');
+        }
 
-        // Navbar scroll effect
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            icon.className = `fa-solid ${themeIcons[theme]}`;
+        }
+
+        initTheme();
+
+        // ===== NAVBAR SCROLL =====
         const navbar = document.getElementById('navbar');
         window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                navbar.classList.add('bg-white/80', 'dark:bg-neutral-900/80', 'backdrop-blur-md', 'border-b', 'border-neutral-200', 'dark:border-neutral-800');
+            if (window.scrollY > 40) {
+                navbar.classList.add('border-theme');
+                navbar.style.borderColor = 'var(--border)';
             } else {
-                navbar.classList.remove('bg-white/80', 'dark:bg-neutral-900/80', 'backdrop-blur-md', 'border-b', 'border-neutral-200', 'dark:border-neutral-800');
+                navbar.style.borderColor = 'transparent';
             }
         });
 
-        // ===== COMMAND PALETTE =====
-        const commandPalette = document.getElementById('commandPalette');
-        const commandInput = document.getElementById('commandInput');
-        const commandResults = document.getElementById('commandResults');
+        // ===== TOAST SYSTEM =====
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<div class="font-medium">${type === 'success' ? 'Success' : 'Error'}</div><div class="text-theme-muted text-xs mt-1">${message}</div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
 
-        const converters = [
-            { name: 'text_to_pdf', desc: 'TXT → PDF', action: () => selectConverter('text-to-pdf') },
-            { name: 'word_to_pdf', desc: 'DOCX → PDF', action: () => selectConverter('word-to-pdf') },
-            { name: 'pdf_to_word', desc: 'PDF → DOCX', action: () => selectConverter('pdf-to-word') },
-            { name: 'image_to_pdf', desc: 'IMG → PDF', action: () => selectConverter('image-to-pdf') },
-            { name: 'pdf_to_image', desc: 'PDF → IMG', action: () => selectConverter('pdf-to-image') },
-            { name: 'merge_pdf', desc: 'PDF + PDF', action: () => selectConverter('merge-pdf') },
-            { name: 'split_pdf', desc: 'PDF → PDFs', action: () => selectConverter('split-pdf') },
-            { name: 'compress_pdf', desc: 'PDF → PDF', action: () => selectConverter('compress-pdf') },
-            { name: 'excel_to_pdf', desc: 'XLSX → PDF', action: () => selectConverter('excel-to-pdf') },
-            { name: 'ppt_to_pdf', desc: 'PPT → PDF', action: () => selectConverter('ppt-to-pdf') },
-            { name: 'html_to_pdf', desc: 'HTML → PDF', action: () => selectConverter('html-to-pdf') },
-            { name: 'ocr_extraction', desc: 'IMG → TXT', action: () => selectConverter('ocr-pdf') },
+        // ===== COMMAND PALETTE =====
+        const palette = document.getElementById('commandPalette');
+        const pInput = document.getElementById('commandInput');
+        const pResults = document.getElementById('commandResults');
+
+        const allConverters = [
+            { id: 'text-to-pdf', name: 'Text to PDF', desc: 'TXT, MD → PDF', icon: 'fa-file-lines' },
+            { id: 'word-to-pdf', name: 'Word to PDF', desc: 'DOCX → PDF', icon: 'fa-file-word' },
+            { id: 'pdf-to-word', name: 'PDF to Word', desc: 'PDF → DOCX', icon: 'fa-file-pdf' },
+            { id: 'image-to-pdf', name: 'Image to PDF', desc: 'JPG, PNG → PDF', icon: 'fa-image' },
+            { id: 'pdf-to-image', name: 'PDF to Image', desc: 'PDF → PNG, JPG', icon: 'fa-images' },
+            { id: 'merge-pdf', name: 'Merge PDF', desc: 'Combine PDFs', icon: 'fa-object-group' },
+            { id: 'split-pdf', name: 'Split PDF', desc: 'Extract pages', icon: 'fa-scissors' },
+            { id: 'compress-pdf', name: 'Compress PDF', desc: 'Reduce file size', icon: 'fa-compress' },
+            { id: 'excel-to-pdf', name: 'Excel to PDF', desc: 'XLSX → PDF', icon: 'fa-file-excel' },
+            { id: 'ppt-to-pdf', name: 'PowerPoint to PDF', desc: 'PPT → PDF', icon: 'fa-file-powerpoint' },
+            { id: 'html-to-pdf', name: 'HTML to PDF', desc: 'HTML → PDF', icon: 'fa-html5' },
+            { id: 'ocr-pdf', name: 'OCR Extraction', desc: 'Image → Text', icon: 'fa-eye' },
         ];
 
         function openCommandPalette() {
-            commandPalette.classList.remove('hidden');
-            commandPalette.classList.add('flex');
-            commandInput.value = '';
-            commandInput.focus();
-            renderResults(converters);
+            palette.classList.remove('hidden');
+            palette.classList.add('flex');
+            pInput.value = '';
+            pInput.focus();
+            renderPalette(allConverters);
         }
 
         function closeCommandPalette() {
-            commandPalette.classList.add('hidden');
-            commandPalette.classList.remove('flex');
+            palette.classList.add('hidden');
+            palette.classList.remove('flex');
         }
 
-        function renderResults(items) {
-            commandResults.innerHTML = items.map((item, i) => `
-                <div onclick="converters[${i}].action(); closeCommandPalette();" 
-                     class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-terminal text-neutral-400 text-xs"></i>
-                        <span class="font-mono text-sm text-neutral-900 dark:text-white">${item.name}</span>
-                    </div>
-                    <span class="font-mono text-xs text-neutral-500">${item.desc}</span>
+        function renderPalette(items) {
+            pResults.innerHTML = items.map(item => `
+                <div onclick="runConverter('${item.id}'); closeCommandPalette();" class="flex items-center gap-3 p-3 rounded-lg hover:bg-theme-hover cursor-pointer transition-colors">
+                    <div class="w-8 h-8 rounded bg-theme-input flex items-center justify-center"><i class="fa-solid ${item.icon} text-xs text-theme-muted"></i></div>
+                    <div><div class="text-sm font-medium text-theme-main">${item.name}</div><div class="text-xs text-theme-muted font-mono">${item.desc}</div></div>
                 </div>
             `).join('');
         }
 
-        commandInput.addEventListener('input', (e) => {
+        pInput.addEventListener('input', (e) => {
             const q = e.target.value.toLowerCase();
-            const filtered = converters.filter(c => c.name.includes(q) || c.desc.toLowerCase().includes(q));
-            renderResults(filtered);
+            const filtered = allConverters.filter(c => c.name.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q));
+            renderPalette(filtered);
         });
 
-        // Keyboard shortcut: Ctrl+K or Cmd+K
         document.addEventListener('keydown', (e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                openCommandPalette();
-            }
-            if (e.key === 'Escape') {
-                closeCommandPalette();
-                closeModal();
-            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openCommandPalette(); }
+            if (e.key === 'Escape') { closeCommandPalette(); closeModal(); }
         });
 
         // ===== FILE UPLOAD =====
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
         const conversionArea = document.getElementById('conversionArea');
-        
-        // Global files storage
-        window.uploadedFiles = [];
+        window.stagedFiles = [];
 
         uploadZone.addEventListener('click', () => fileInput.click());
-        
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('dragover');
-        });
-
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
-
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            handleFiles(e.dataTransfer.files);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-        });
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => { e.preventDefault(); uploadZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
         function handleFiles(files) {
-            if (files.length === 0) return;
-            
-            // Store globally
-            window.uploadedFiles = Array.from(files);
+            if (!files.length) return;
+            window.stagedFiles = Array.from(files);
             conversionArea.classList.remove('hidden');
             conversionArea.innerHTML = '';
-            
-            window.uploadedFiles.forEach((file, index) => {
-                const fileCard = document.createElement('div');
-                fileCard.className = 'flex items-center gap-4 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 animate-slide-up';
-                fileCard.style.animationDelay = `${index * 0.1}s`;
-                
-                const icon = getFileIcon(file.name);
-                const size = formatBytes(file.size);
-                
-                fileCard.innerHTML = `
-                    <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid ${icon} text-neutral-600 dark:text-neutral-400"></i>
-                    </div>
+            window.stagedFiles.forEach((file, i) => {
+                const card = document.createElement('div');
+                card.className = 'flex items-center gap-4 p-4 rounded-xl border border-theme bg-theme-card fade-in';
+                card.style.animationDelay = `${i * 0.08}s`;
+                card.innerHTML = `
+                    <div class="w-10 h-10 rounded-lg bg-theme-input flex items-center justify-center flex-shrink-0"><i class="fa-solid ${getIcon(file.name)} text-theme-muted"></i></div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-mono text-sm text-neutral-900 dark:text-white truncate">${file.name}</div>
-                        <div class="font-mono text-xs text-neutral-500">${size}</div>
+                        <div class="text-sm font-medium text-theme-main truncate">${file.name}</div>
+                        <div class="font-mono text-xs text-theme-muted">${formatSize(file.size)}</div>
                     </div>
-                    <select id="format-${index}" class="px-3 py-2 rounded border border-neutral-200 dark:border-neutral-700 bg-transparent font-mono text-xs text-neutral-700 dark:text-neutral-300 focus:outline-none focus:border-neutral-900 dark:focus:border-white">
+                    <select id="fmt-${i}" class="px-3 py-2 rounded bg-theme-body border border-theme font-mono text-xs text-theme-main outline-none focus:border-theme-accent">
                         <option value="pdf">PDF</option>
                         <option value="docx">DOCX</option>
                         <option value="txt">TXT</option>
                         <option value="png">PNG</option>
                         <option value="jpg">JPG</option>
                     </select>
-                    <button onclick="startConversion(${index})" class="px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded font-mono text-xs hover:opacity-90 transition-opacity">
-                        Convert
-                    </button>
+                    <button onclick="convertFile(${i})" class="px-4 py-2 rounded btn-primary font-mono text-xs font-medium">Convert</button>
                 `;
-                
-                conversionArea.appendChild(fileCard);
+                conversionArea.appendChild(card);
             });
         }
 
-        function getFileIcon(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            const icons = {
-                pdf: 'fa-file-pdf',
-                doc: 'fa-file-word',
-                docx: 'fa-file-word',
-                txt: 'fa-file-lines',
-                jpg: 'fa-file-image',
-                jpeg: 'fa-file-image',
-                png: 'fa-file-image',
-                webp: 'fa-file-image',
-                xls: 'fa-file-excel',
-                xlsx: 'fa-file-excel',
-                ppt: 'fa-file-powerpoint',
-                pptx: 'fa-file-powerpoint',
-                html: 'fa-file-code',
-                md: 'fa-file-code'
-            };
-            return icons[ext] || 'fa-file';
+        function getIcon(name) {
+            const ext = name.split('.').pop().toLowerCase();
+            const map = { pdf:'fa-file-pdf', doc:'fa-file-word', docx:'fa-file-word', txt:'fa-file-lines', jpg:'fa-file-image', jpeg:'fa-file-image', png:'fa-file-image', webp:'fa-file-image', xls:'fa-file-excel', xlsx:'fa-file-excel', ppt:'fa-file-powerpoint', pptx:'fa-file-powerpoint', html:'fa-file-code', md:'fa-file-code' };
+            return map[ext] || 'fa-file';
         }
 
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        function formatSize(b) {
+            if (!b) return '0 B';
+            const u = ['B','KB','MB','GB'];
+            const i = Math.floor(Math.log(b)/Math.log(1024));
+            return (b/Math.pow(1024,i)).toFixed(1)+' '+u[i];
         }
 
-        // ===== REAL CONVERSION =====
         function selectConverter(type) {
             document.getElementById('converters').scrollIntoView({ behavior: 'smooth' });
-            uploadZone.classList.add('border-neutral-900', 'dark:border-white');
-            setTimeout(() => {
-                uploadZone.classList.remove('border-neutral-900', 'dark:border-white');
-            }, 300);
+            uploadZone.classList.add('dragover');
+            setTimeout(() => uploadZone.classList.remove('dragover'), 400);
         }
 
-        async function startConversion(fileIndex) {
-            const file = window.uploadedFiles[fileIndex];
+        function runConverter(type) {
+            selectConverter(type);
+            showToast('Please upload a file to convert', 'success');
+        }
+
+        // ===== REAL CONVERSION ENGINE =====
+        async function convertFile(index) {
+            const file = window.stagedFiles[index];
             if (!file) return;
 
             const modal = document.getElementById('conversionModal');
-            const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const progressSize = document.getElementById('progressSize');
-            const modalSuccess = document.getElementById('modalSuccess');
-            const modalTitle = document.getElementById('modalTitle');
-            const modalSubtitle = document.getElementById('modalSubtitle');
-            
+            const bar = document.getElementById('progressBar');
+            const pct = document.getElementById('progressText');
+            const size = document.getElementById('progressSize');
+            const success = document.getElementById('modalSuccess');
+            const title = document.getElementById('modalTitle');
+            const sub = document.getElementById('modalSubtitle');
+
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            modalSuccess.classList.add('hidden');
-            modalTitle.textContent = 'Uploading...';
-            modalSubtitle.textContent = file.name;
-            progressBar.style.width = '10%';
-            progressText.textContent = '10%';
-            progressSize.textContent = `0MB / ${formatBytes(file.size)}`;
+            success.classList.add('hidden');
+            title.textContent = 'Reading file...';
+            sub.textContent = file.name;
+            bar.style.width = '10%';
+            pct.textContent = '10%';
+            size.textContent = `0 MB / ${formatSize(file.size)}`;
 
             try {
-                // FormData banao
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('format', document.getElementById(`format-${fileIndex}`).value);
+                const fmt = document.getElementById(`fmt-${index}`).value;
+                const ext = file.name.split('.').pop().toLowerCase();
+                let blob, outName;
 
-                // Backend pe bhejo
-                const response = await fetch(`${API_URL}/convert`, {
-                    method: 'POST',
-                    body: formData
-                });
+                // Determine converter based on input type and target
+                const converterKey = detectConverter(ext, fmt);
+                
+                bar.style.width = '30%';
+                pct.textContent = '30%';
+                title.textContent = 'Converting...';
 
-                progressBar.style.width = '70%';
-                progressText.textContent = '70%';
-
-                const data = await response.json();
-
-                if (data.success) {
-                    progressBar.style.width = '100%';
-                    progressText.textContent = '100%';
-                    progressSize.textContent = `${formatBytes(file.size)} / ${formatBytes(file.size)}`;
-                    
-                    modalTitle.textContent = 'Complete!';
-                    modalSubtitle.textContent = 'Your file is ready';
-                    
-                    // Download button ko real link do
-                    const downloadBtn = document.getElementById('downloadBtn');
-                    const downloadUrl = `${API_URL}/download/${data.fileId}?name=${encodeURIComponent(data.fileName)}`;
-                    downloadBtn.href = downloadUrl;
-                    downloadBtn.download = data.fileName;
-                    
-                    modalSuccess.classList.remove('hidden');
+                if (converterKey && ConversionEngine[converterKey]) {
+                    blob = await ConversionEngine[converterKey](file);
+                    outName = file.name.replace(/\.[^/.]+$/, '') + '_converted.' + fmt;
                 } else {
-                    modalTitle.textContent = 'Error!';
-                    modalSubtitle.textContent = 'Something went wrong';
+                    // Generic fallback: if same type, just return file; if text, extract; else error
+                    if (fmt === 'txt' && ext !== 'txt') {
+                        blob = await extractTextFallback(file, ext);
+                        outName = file.name.replace(/\.[^/.]+$/, '') + '.txt';
+                    } else {
+                        throw new Error('This conversion is not yet supported client-side. Backend integration required.');
+                    }
                 }
 
-            } catch (error) {
-                console.error('Error:', error);
-                modalTitle.textContent = 'Error!';
-                modalSubtitle.textContent = 'Failed to connect to server';
+                bar.style.width = '90%';
+                pct.textContent = '90%';
+                title.textContent = 'Finalizing...';
+
+                // Create download URL
+                const url = URL.createObjectURL(blob);
+                const btn = document.getElementById('downloadBtn');
+                btn.href = url;
+                btn.download = outName;
+
+                bar.style.width = '100%';
+                pct.textContent = '100%';
+                size.textContent = `${formatSize(file.size)} / ${formatSize(file.size)}`;
+                title.textContent = 'Complete!';
+                sub.textContent = 'Your file is ready';
+                success.classList.remove('hidden');
+                showToast('Conversion successful!', 'success');
+
+            } catch (err) {
+                console.error(err);
+                title.textContent = 'Error';
+                sub.textContent = err.message || 'Failed to convert file';
+                bar.style.width = '100%';
+                bar.style.background = 'var(--error)';
+                showToast(err.message || 'Conversion failed', 'error');
             }
         }
 
-        function closeModal() {
-            const modal = document.getElementById('conversionModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+        function detectConverter(ext, target) {
+            const map = {
+                'txt-pdf': 'text-to-pdf', 'md-pdf': 'text-to-pdf',
+                'docx-pdf': 'word-to-pdf', 'doc-pdf': 'word-to-pdf',
+                'jpg-pdf': 'image-to-pdf', 'jpeg-pdf': 'image-to-pdf', 'png-pdf': 'image-to-pdf', 'webp-pdf': 'image-to-pdf',
+                'pdf-png': 'pdf-to-image', 'pdf-jpg': 'pdf-to-image',
+                'xlsx-pdf': 'excel-to-pdf', 'xls-pdf': 'excel-to-pdf',
+                'pptx-pdf': 'ppt-to-pdf', 'ppt-pdf': 'ppt-to-pdf',
+                'html-pdf': 'html-to-pdf', 'htm-pdf': 'html-to-pdf',
+            };
+            // For merge/split/compress, we handle separately via file count or UI
+            return map[`${ext}-${target}`];
         }
 
-        // Intersection Observer for animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+        async function extractTextFallback(file, ext) {
+            if (ext === 'pdf') {
+                const buf = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map(it => it.str).join(' ') + '\n\n';
+                }
+                return new Blob([text], { type: 'text/plain' });
+            }
+            if (ext === 'docx') {
+                const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+                return new Blob([result.value], { type: 'text/plain' });
+            }
+            if (ext === 'xlsx') {
+                const data = await file.arrayBuffer();
+                const wb = XLSX.read(data);
+                let text = '';
+                wb.SheetNames.forEach(name => {
+                    const sheet = wb.Sheets[name];
+                    text += `--- ${name} ---\n`;
+                    text += XLSX.utils.sheet_to_csv(sheet) + '\n\n';
+                });
+                return new Blob([text], { type: 'text/plain' });
+            }
+            return new Blob(['Text extraction not available for this format.'], { type: 'text/plain' });
+        }
+
+        const ConversionEngine = {
+            async 'text-to-pdf'(file) {
+                const text = await file.text();
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const lines = doc.splitTextToSize(text, 180);
+                doc.text(lines, 15, 15);
+                return doc.output('blob');
+            },
+
+            async 'image-to-pdf'(file) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const { jsPDF } = window.jspdf;
+                        const orientation = img.width > img.height ? 'l' : 'p';
+                        const doc = new jsPDF(orientation, 'mm', 'a4');
+                        const pageW = doc.internal.pageSize.getWidth();
+                        const pageH = doc.internal.pageSize.getHeight();
+                        const ratio = Math.min(pageW / img.width, pageH / img.height);
+                        const w = img.width * ratio;
+                        const h = img.height * ratio;
+                        doc.addImage(img, 'JPEG', (pageW - w) / 2, (pageH - h) / 2, w, h);
+                        resolve(doc.output('blob'));
+                    };
+                    img.src = URL.createObjectURL(file);
+                });
+            },
+
+            async 'word-to-pdf'(file) {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.convertToHtml({ arrayBuffer });
+                const div = document.createElement('div');
+                div.innerHTML = result.value;
+                div.style.position = 'fixed';
+                div.style.left = '-9999px';
+                div.style.width = '800px';
+                div.style.padding = '40px';
+                div.style.background = 'white';
+                div.style.color = 'black';
+                document.body.appendChild(div);
+                const canvas = await html2canvas(div, { scale: 2, backgroundColor: '#ffffff' });
+                document.body.removeChild(div);
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const imgProps = doc.getImageProperties(imgData);
+                const pdfWidth = doc.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                return doc.output('blob');
+            },
+
+            async 'pdf-to-image'(file) {
+                const buf = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+                const page = await pdf.getPage(1);
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const viewport = page.getViewport({ scale: 2 });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            },
+
+            async 'excel-to-pdf'(file) {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const first = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(first, { header: 1 });
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                if (doc.autoTable) {
+                    doc.autoTable({ head: [json[0] || []], body: json.slice(1), theme: 'grid', styles: { fontSize: 9, cellWidth: 'auto' }, headStyles: { fillColor: [40,40,40], textColor: 255 } });
+                } else {
+                    doc.text('Excel data loaded (autoTable plugin missing)', 10, 10);
+                }
+                return doc.output('blob');
+            },
+
+            async 'ppt-to-pdf'(file) {
+                const zip = await JSZip.loadAsync(file);
+                const slides = [];
+                const paths = Object.keys(zip.files).filter(p => p.startsWith('ppt/slides/slide') && p.endsWith('.xml')).sort();
+                for (const path of paths) {
+                    const xml = await zip.files[path].async('text');
+                    const texts = (xml.match(/<<a:t>([^<<]*)<<\/a:t>/g) || []).map(t => t.replace(/<<a:t>|<\/a:t>/g, '')).join(' ');
+                    slides.push(texts);
+                }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                slides.forEach((text, i) => {
+                    if (i > 0) doc.addPage();
+                    doc.setFontSize(18);
+                    doc.text(`Slide ${i + 1}`, 10, 20);
+                    doc.setFontSize(11);
+                    const lines = doc.splitTextToSize(text || '(No text content)', 180);
+                    doc.text(lines, 10, 35);
+                });
+                return doc.output('blob');
+            },
+
+            async 'html-to-pdf'(file) {
+                const html = await file.text();
+                const div = document.createElement('div');
+                div.innerHTML = html;
+                div.style.position = 'fixed';
+                div.style.left = '-9999px';
+                div.style.width = '800px';
+                document.body.appendChild(div);
+                const canvas = await html2canvas(div, { scale: 2, useCORS: true });
+                document.body.removeChild(div);
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const props = doc.getImageProperties(imgData);
+                const w = doc.internal.pageSize.getWidth();
+                const h = (props.height * w) / props.width;
+                doc.addImage(imgData, 'PNG', 0, 0, w, h);
+                return doc.output('blob');
+            },
+
+            async 'compress-pdf'(file) {
+                const buf = await file.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(buf);
+                const bytes = await pdf.save({ useObjectStreams: true });
+                return new Blob([bytes], { type: 'application/pdf' });
+            }
         };
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
+        // Merge & Split need multiple files — handled via stagedFiles
+        async function mergeAllPDFs() {
+            const pdfs = window.stagedFiles.filter(f => f.name.endsWith('.pdf'));
+            if (pdfs.length < 2) { showToast('Please upload at least 2 PDFs', 'error'); return; }
+            const merged = await PDFLib.PDFDocument.create();
+            for (const file of pdfs) {
+                const buf = await file.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(buf);
+                const pages = await merged.copyPages(pdf, pdf.getPageIndices());
+                pages.forEach(p => merged.addPage(p));
+            }
+            const bytes = await merged.save();
+            const blob = new Blob([bytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'merged.pdf'; a.click();
+            showToast('PDFs merged successfully!', 'success');
+        }
+
+        async function splitPDF(file) {
+            const buf = await file.arrayBuffer();
+            const pdf = await PDFLib.PDFDocument.load(buf);
+            const count = pdf.getPageCount();
+            const zip = new JSZip();
+            for (let i = 0; i < count; i++) {
+                const newPdf = await PDFLib.PDFDocument.create();
+                const [page] = await newPdf.copyPages(pdf, [i]);
+                newPdf.addPage(page);
+                const bytes = await newPdf.save();
+                zip.file(`page_${i+1}.pdf`, bytes);
+            }
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'split_pages.zip'; a.click();
+            showToast('PDF split into pages!', 'success');
+        }
+
+        // OCR lazy load
+        async function runOCR(file) {
+            if (!window.Tesseract) {
+                showToast('Loading OCR engine...', 'success');
+                await new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                    s.onload = resolve;
+                    s.onerror = reject;
+                    document.head.appendChild(s);
+                });
+            }
+            const result = await Tesseract.recognize(file, 'eng');
+            const blob = new Blob([result.data.text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = file.name.replace(/\.[^/.]+$/, '') + '.txt';
+            a.click();
+            showToast('Text extracted successfully!', 'success');
+        }
+
+        function closeModal() {
+            const m = document.getElementById('conversionModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+            // Reset progress bar color
+            document.getElementById('progressBar').style.background = '';
+        }
+
+        // Intersection Observer for scroll animations
+        const obs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; } });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
         document.querySelectorAll('.converter-card').forEach((el, i) => {
             el.style.opacity = '0';
             el.style.transform = 'translateY(20px)';
-            el.style.transition = `opacity 0.5s ease ${i * 0.05}s, transform 0.5s ease ${i * 0.05}s`;
-            observer.observe(el);
+            el.style.transition = `opacity 0.5s ease ${i * 0.04}s, transform 0.5s ease ${i * 0.04}s`;
+            obs.observe(el);
         });
+
+        // Setup pdf.js worker
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
     </script>
 </body>
 </html>
